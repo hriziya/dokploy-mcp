@@ -1,37 +1,80 @@
 # dokploy-mcp
 
-MCP server for the Dokploy API. 224 tools. Zero opinions about your infrastructure choices.
+MCP server for the Dokploy API.
 
-Your AI can now deploy, destroy, and redeploy your apps faster than you can say "who approved that PR?"
+[![npm version](https://img.shields.io/npm/v/dokploy-mcp)](https://www.npmjs.com/package/dokploy-mcp)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Node >= 22](https://img.shields.io/badge/node-%3E%3D22-brightgreen)](https://nodejs.org/)
 
-## What is this
+## Overview
 
-An MCP (Model Context Protocol) server that lets Claude, Cursor, VS Code, and anything else that speaks MCP talk directly to your Dokploy instance. Every API endpoint. No exceptions.
+A [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server that provides complete coverage of the Dokploy API. With 224 tools across 24 modules, it enables LLMs to manage Dokploy infrastructure through natural language -- deploying applications, managing databases, configuring domains, handling backups, and more.
 
-The old version had 67 tools and called it a day. This one has **224 tools** across **24 modules** because half-measures are for people who still write Dockerfiles by hand.
+## Features
 
-## What you need
+- **Complete API coverage** across all 24 Dokploy modules (224 tools)
+- **Type-safe schemas** with Zod v4 validation on every parameter
+- **Tool annotations** (`readOnlyHint`, `destructiveHint`, `idempotentHint`) so clients can warn before destructive operations
+- **Lazy configuration loading** -- environment variables are validated on first API call, not at startup
+- **Comprehensive error handling** with actionable messages mapped from HTTP status codes
+- **Minimal dependencies** -- only `@modelcontextprotocol/sdk` and `zod`
 
-- Node.js >= 18 (you probably have this, it's not 2019)
-- A Dokploy server running somewhere
-- An API key from said server (Settings > API in your Dokploy dashboard)
-- An MCP client (Claude Code, Claude Desktop, Cursor, VS Code, Windsurf, whatever)
+## Installation
 
-## Setup
+```bash
+npm install dokploy-mcp
+```
 
-### Claude Code
+Or run directly:
 
-Drop this in your project's `.mcp.json` or `~/.claude/claude_desktop_config.json`:
+```bash
+npx dokploy-mcp
+```
+
+## Configuration
+
+### Environment Variables
+
+| Variable | Required | Description | Default |
+|---|---|---|---|
+| `DOKPLOY_URL` | Yes | Base URL of your Dokploy instance API (e.g., `https://dokploy.example.com/api`) | -- |
+| `DOKPLOY_API_KEY` | Yes | API key from Dokploy Settings > API | -- |
+| `DOKPLOY_TIMEOUT` | No | Request timeout in milliseconds | `30000` |
+
+## Usage with MCP Clients
+
+### Claude Desktop
+
+Add the following to your Claude Desktop configuration file (`claude_desktop_config.json`):
 
 ```json
 {
   "mcpServers": {
     "dokploy": {
       "command": "npx",
-      "args": ["-y", "dokploy-mcp"],
+      "args": ["dokploy-mcp"],
       "env": {
-        "DOKPLOY_URL": "https://your-dokploy-server.com/api",
-        "DOKPLOY_API_KEY": "your-api-key-here"
+        "DOKPLOY_URL": "https://dokploy.example.com/api",
+        "DOKPLOY_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+```
+
+### Claude Code
+
+Add the following to your `.mcp.json` configuration file:
+
+```json
+{
+  "mcpServers": {
+    "dokploy": {
+      "command": "npx",
+      "args": ["dokploy-mcp"],
+      "env": {
+        "DOKPLOY_URL": "https://dokploy.example.com/api",
+        "DOKPLOY_API_KEY": "your-api-key"
       }
     }
   }
@@ -40,30 +83,43 @@ Drop this in your project's `.mcp.json` or `~/.claude/claude_desktop_config.json
 
 ### Cursor
 
-`Settings` > `Cursor Settings` > `MCP` > `Add new global MCP server`
-
-Same JSON as above. Put it in `~/.cursor/mcp.json` or `.cursor/mcp.json` in your project.
-
-### VS Code
-
-Same energy, different file. `.vscode/mcp.json`:
+Add to `~/.cursor/mcp.json` or `.cursor/mcp.json` in your project:
 
 ```json
 {
-  "servers": {
+  "mcpServers": {
     "dokploy": {
       "command": "npx",
-      "args": ["-y", "dokploy-mcp"],
+      "args": ["dokploy-mcp"],
       "env": {
-        "DOKPLOY_URL": "https://your-dokploy-server.com/api",
-        "DOKPLOY_API_KEY": "your-api-key-here"
+        "DOKPLOY_URL": "https://dokploy.example.com/api",
+        "DOKPLOY_API_KEY": "your-api-key"
       }
     }
   }
 }
 ```
 
-### Local dev
+### VS Code
+
+Add to `.vscode/mcp.json`:
+
+```json
+{
+  "servers": {
+    "dokploy": {
+      "command": "npx",
+      "args": ["dokploy-mcp"],
+      "env": {
+        "DOKPLOY_URL": "https://dokploy.example.com/api",
+        "DOKPLOY_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+```
+
+### Local Development
 
 ```bash
 git clone <this-repo>
@@ -80,136 +136,443 @@ Then point your MCP client at the local build:
       "command": "node",
       "args": ["/path/to/dokploy-mcp/dist/index.js"],
       "env": {
-        "DOKPLOY_URL": "https://your-dokploy-server.com/api",
-        "DOKPLOY_API_KEY": "your-api-key-here"
+        "DOKPLOY_URL": "https://dokploy.example.com/api",
+        "DOKPLOY_API_KEY": "your-api-key"
       }
     }
   }
 }
 ```
 
-### Testing with MCP Inspector
-
-```bash
-DOKPLOY_URL=https://your-server.com/api DOKPLOY_API_KEY=your-key npx @modelcontextprotocol/inspector node dist/index.js
-```
-
-Opens a browser UI where you can poke every tool individually. Very satisfying.
-
-## Environment variables
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `DOKPLOY_URL` | Yes | Your Dokploy API URL. Ends with `/api`. |
-| `DOKPLOY_API_KEY` | Yes | API key from Dokploy Settings > API. |
-| `DOKPLOY_TIMEOUT` | No | Request timeout in ms. Default: `30000`. |
-
-## All 224 tools
-
-Organized by what they break.
-
-### Projects (6)
-`project-all` `project-one` `project-create` `project-update` `project-duplicate` `project-remove`
-
-### Applications (26)
-`application-create` `application-one` `application-update` `application-delete` `application-move` `application-deploy` `application-redeploy` `application-start` `application-stop` `application-cancelDeployment` `application-reload` `application-markRunning` `application-cleanQueues` `application-refreshToken` `application-saveBuildType` `application-saveEnvironment` `application-saveGithubProvider` `application-saveGitlabProvider` `application-saveBitbucketProvider` `application-saveGiteaProvider` `application-saveGitProvider` `application-saveDockerProvider` `application-disconnectGitProvider` `application-readAppMonitoring` `application-readTraefikConfig` `application-updateTraefikConfig`
-
-### Docker Compose (17)
-`compose-create` `compose-one` `compose-update` `compose-delete` `compose-deploy` `compose-redeploy` `compose-stop` `compose-cleanQueues` `compose-allServices` `compose-randomizeCompose` `compose-getDefaultCommand` `compose-generateSSHKey` `compose-refreshToken` `compose-removeSSHKey` `compose-deployTemplate` `compose-templates` `compose-saveEnvironment`
-
-### Domains (9)
-`domain-create` `domain-one` `domain-byApplicationId` `domain-byComposeId` `domain-update` `domain-delete` `domain-validateDomain` `domain-generateDomain` `domain-generateWildcard`
-
-### PostgreSQL (13)
-`postgres-one` `postgres-create` `postgres-update` `postgres-remove` `postgres-move` `postgres-deploy` `postgres-start` `postgres-stop` `postgres-reload` `postgres-rebuild` `postgres-changeStatus` `postgres-saveExternalPort` `postgres-saveEnvironment`
-
-### MySQL (13)
-`mysql-one` `mysql-create` `mysql-update` `mysql-remove` `mysql-move` `mysql-deploy` `mysql-start` `mysql-stop` `mysql-reload` `mysql-rebuild` `mysql-changeStatus` `mysql-saveExternalPort` `mysql-saveEnvironment`
-
-### MariaDB (13)
-`mariadb-one` `mariadb-create` `mariadb-update` `mariadb-remove` `mariadb-move` `mariadb-deploy` `mariadb-start` `mariadb-stop` `mariadb-reload` `mariadb-rebuild` `mariadb-changeStatus` `mariadb-saveExternalPort` `mariadb-saveEnvironment`
-
-### MongoDB (13)
-`mongo-one` `mongo-create` `mongo-update` `mongo-remove` `mongo-move` `mongo-deploy` `mongo-start` `mongo-stop` `mongo-reload` `mongo-rebuild` `mongo-changeStatus` `mongo-saveExternalPort` `mongo-saveEnvironment`
-
-### Redis (13)
-`redis-one` `redis-create` `redis-update` `redis-remove` `redis-move` `redis-deploy` `redis-start` `redis-stop` `redis-reload` `redis-rebuild` `redis-changeStatus` `redis-saveExternalPort` `redis-saveEnvironment`
-
-### Deployments (2)
-`deployment-all` `deployment-allByCompose`
-
-### Docker (4)
-`docker-getContainers` `docker-getConfig` `docker-getContainersByAppNameMatch` `docker-getContainersByAppLabel`
-
-### Certificates (4)
-`certificates-all` `certificates-one` `certificates-create` `certificates-remove`
-
-### Registry (7)
-`registry-all` `registry-one` `registry-create` `registry-update` `registry-remove` `registry-testRegistry` `registry-enableSelfHostedRegistry`
-
-### Destinations / S3 (6)
-`destination-all` `destination-one` `destination-create` `destination-update` `destination-remove` `destination-testConnection`
-
-### Backups (8)
-`backup-one` `backup-create` `backup-update` `backup-remove` `backup-manualBackupPostgres` `backup-manualBackupMySql` `backup-manualBackupMariadb` `backup-manualBackupMongo`
-
-### Mounts (4)
-`mounts-one` `mounts-create` `mounts-update` `mounts-remove`
-
-### Ports (4)
-`port-one` `port-create` `port-update` `port-delete`
-
-### Redirects (4)
-`redirects-one` `redirects-create` `redirects-update` `redirects-delete`
-
-### Security (4)
-`security-one` `security-create` `security-update` `security-delete`
-
-### Cluster (4)
-`cluster-getNodes` `cluster-addWorker` `cluster-addManager` `cluster-removeWorker`
-
-### Settings (24)
-`settings-reloadServer` `settings-reloadTraefik` `settings-cleanUnusedImages` `settings-cleanUnusedVolumes` `settings-cleanStoppedContainers` `settings-cleanDockerBuilder` `settings-cleanDockerPrune` `settings-cleanAll` `settings-cleanMonitoring` `settings-saveSSHPrivateKey` `settings-cleanSSHPrivateKey` `settings-assignDomainServer` `settings-updateDockerCleanup` `settings-readTraefikConfig` `settings-updateTraefikConfig` `settings-readWebServerTraefikConfig` `settings-updateWebServerTraefikConfig` `settings-readMiddlewareTraefikConfig` `settings-updateMiddlewareTraefikConfig` `settings-checkAndUpdateImage` `settings-updateServer` `settings-getDokployVersion` `settings-readDirectories` `settings-getOpenApiDocument`
-
-### Auth (14)
-`auth-createAdmin` `auth-createUser` `auth-login` `auth-get` `auth-logout` `auth-update` `auth-generateToken` `auth-one` `auth-updateByAdmin` `auth-generate2FASecret` `auth-verify2FASetup` `auth-verifyLogin2FA` `auth-disable2FA` `auth-verifyToken`
-
-### Admin (9)
-`admin-one` `admin-createUserInvitation` `admin-removeUser` `admin-getUserByToken` `admin-assignPermissions` `admin-cleanGithubApp` `admin-getRepositories` `admin-getBranches` `admin-haveGithubConfigured`
-
-### Users (3)
-`user-all` `user-byAuthId` `user-byUserId`
-
-## Architecture
-
-Two dependencies. That's it. `@modelcontextprotocol/sdk` and `zod`.
-
-No axios. No express. No logger library that weighs more than your app. Native `fetch` because it's not 2021 anymore.
-
-```
-src/
-  index.ts          # Entry point. 10 lines. You're welcome.
-  server.ts         # Creates MCP server, registers tools.
-  api/
-    client.ts       # fetch wrapper with error handling.
-  tools/
-    _factory.ts     # postTool(), getTool(), createTool() helpers.
-    project.ts      # 6 tools
-    application.ts  # 26 tools
-    compose.ts      # 17 tools
-    ...             # 21 more module files
-    index.ts        # Wires everything together.
-```
-
-Every tool gets Zod schema validation, typed error handling, and MCP annotations (read-only, destructive, idempotent hints). The AI knows which tools are safe to call without asking.
-
-## Getting your API key
+## Getting Your API Key
 
 1. Open your Dokploy dashboard
 2. Go to Settings > Profile > API/CLI section
 3. Generate a token
-4. Try not to commit it to a public repo
+4. Use it as the `DOKPLOY_API_KEY` environment variable
+
+## Tool Reference
+
+All 224 tools are organized into 24 modules. Each table below shows the tool name, a brief description, and whether the tool is read-only or mutating/destructive.
+
+For the complete reference with full descriptions and parameter details, see [docs/TOOLS.md](docs/TOOLS.md).
+
+### Project (6 tools)
+
+| Tool | Description | Type |
+|---|---|---|
+| `dokploy_project_all` | List all projects | Read-only |
+| `dokploy_project_one` | Get project details by ID | Read-only |
+| `dokploy_project_create` | Create a new project | Mutating |
+| `dokploy_project_update` | Update an existing project | Mutating |
+| `dokploy_project_duplicate` | Duplicate a project with its services | Mutating |
+| `dokploy_project_remove` | Remove a project and all its resources | Destructive |
+
+### Application (25 tools)
+
+| Tool | Description | Type |
+|---|---|---|
+| `dokploy_application_create` | Create a new application in a project | Mutating |
+| `dokploy_application_one` | Get application details by ID | Read-only |
+| `dokploy_application_update` | Update application configuration | Mutating |
+| `dokploy_application_delete` | Delete an application permanently | Destructive |
+| `dokploy_application_move` | Move application to another project | Mutating |
+| `dokploy_application_deploy` | Trigger a new deployment | Mutating |
+| `dokploy_application_redeploy` | Force a full redeploy from source | Mutating |
+| `dokploy_application_start` | Start a stopped application | Mutating |
+| `dokploy_application_stop` | Stop a running application | Destructive |
+| `dokploy_application_cancel_deployment` | Cancel an in-progress deployment | Mutating |
+| `dokploy_application_reload` | Reload application containers | Mutating |
+| `dokploy_application_mark_running` | Manually mark application as running | Mutating |
+| `dokploy_application_clean_queues` | Clean pending deployment queues | Mutating |
+| `dokploy_application_refresh_token` | Refresh the webhook token | Mutating |
+| `dokploy_application_save_build_type` | Set build type and settings | Mutating |
+| `dokploy_application_save_environment` | Save environment variables and build args | Mutating |
+| `dokploy_application_save_github_provider` | Configure GitHub as source | Mutating |
+| `dokploy_application_save_gitlab_provider` | Configure GitLab as source | Mutating |
+| `dokploy_application_save_bitbucket_provider` | Configure Bitbucket as source | Mutating |
+| `dokploy_application_save_gitea_provider` | Configure Gitea as source | Mutating |
+| `dokploy_application_save_git_provider` | Configure custom Git repo as source | Mutating |
+| `dokploy_application_save_docker_provider` | Configure Docker image as source | Mutating |
+| `dokploy_application_disconnect_git_provider` | Disconnect the current Git provider | Mutating |
+| `dokploy_application_read_app_monitoring` | Read application monitoring metrics | Read-only |
+| `dokploy_application_read_traefik_config` | Read Traefik config for an application | Read-only |
+| `dokploy_application_update_traefik_config` | Update Traefik config for an application | Mutating |
+
+### Compose (17 tools)
+
+| Tool | Description | Type |
+|---|---|---|
+| `dokploy_compose_create` | Create a new Docker Compose service | Mutating |
+| `dokploy_compose_one` | Get compose service details by ID | Read-only |
+| `dokploy_compose_update` | Update compose service configuration | Mutating |
+| `dokploy_compose_delete` | Delete a compose service permanently | Destructive |
+| `dokploy_compose_deploy` | Deploy a compose service | Mutating |
+| `dokploy_compose_redeploy` | Redeploy a compose service | Mutating |
+| `dokploy_compose_stop` | Stop all containers in a compose service | Destructive |
+| `dokploy_compose_clean_queues` | Clean pending deployment queues | Mutating |
+| `dokploy_compose_all_services` | List individual services in a compose stack | Read-only |
+| `dokploy_compose_randomize` | Randomize service names to avoid conflicts | Mutating |
+| `dokploy_compose_get_default_command` | Get the default deployment command | Read-only |
+| `dokploy_compose_generate_ssh_key` | Generate SSH key pair for Git access | Mutating |
+| `dokploy_compose_refresh_token` | Refresh the webhook token | Mutating |
+| `dokploy_compose_remove_ssh_key` | Remove the SSH key | Mutating |
+| `dokploy_compose_deploy_template` | Deploy from a predefined template | Mutating |
+| `dokploy_compose_templates` | List available compose templates | Read-only |
+| `dokploy_compose_save_environment` | Save environment variables and build args | Mutating |
+
+### Domain (9 tools)
+
+| Tool | Description | Type |
+|---|---|---|
+| `dokploy_domain_create` | Create a new domain configuration | Mutating |
+| `dokploy_domain_one` | Get domain details by ID | Read-only |
+| `dokploy_domain_by_application_id` | List domains for an application | Read-only |
+| `dokploy_domain_by_compose_id` | List domains for a compose service | Read-only |
+| `dokploy_domain_update` | Update a domain configuration | Mutating |
+| `dokploy_domain_delete` | Delete a domain permanently | Destructive |
+| `dokploy_domain_validate` | Validate domain DNS records | Mutating |
+| `dokploy_domain_generate` | Generate a default domain for an app | Mutating |
+| `dokploy_domain_generate_wildcard` | Generate a wildcard domain for an app | Mutating |
+
+### PostgreSQL (13 tools)
+
+| Tool | Description | Type |
+|---|---|---|
+| `dokploy_postgres_one` | Get Postgres database details | Read-only |
+| `dokploy_postgres_create` | Create a new Postgres database | Mutating |
+| `dokploy_postgres_update` | Update Postgres configuration | Mutating |
+| `dokploy_postgres_remove` | Remove a Postgres database | Destructive |
+| `dokploy_postgres_move` | Move database to another project | Mutating |
+| `dokploy_postgres_deploy` | Deploy the database container | Mutating |
+| `dokploy_postgres_start` | Start a stopped database | Mutating |
+| `dokploy_postgres_stop` | Stop a running database | Destructive |
+| `dokploy_postgres_reload` | Reload the database container | Mutating |
+| `dokploy_postgres_rebuild` | Rebuild the database from scratch | Mutating |
+| `dokploy_postgres_change_status` | Manually set application status | Mutating |
+| `dokploy_postgres_save_external_port` | Set or clear the external port | Mutating |
+| `dokploy_postgres_save_environment` | Save environment variables | Mutating |
+
+### MySQL (13 tools)
+
+| Tool | Description | Type |
+|---|---|---|
+| `dokploy_mysql_one` | Get MySQL database details | Read-only |
+| `dokploy_mysql_create` | Create a new MySQL database | Mutating |
+| `dokploy_mysql_update` | Update MySQL configuration | Mutating |
+| `dokploy_mysql_remove` | Remove a MySQL database | Destructive |
+| `dokploy_mysql_move` | Move database to another project | Mutating |
+| `dokploy_mysql_deploy` | Deploy the database container | Mutating |
+| `dokploy_mysql_start` | Start a stopped database | Mutating |
+| `dokploy_mysql_stop` | Stop a running database | Destructive |
+| `dokploy_mysql_reload` | Reload the database container | Mutating |
+| `dokploy_mysql_rebuild` | Rebuild the database from scratch | Mutating |
+| `dokploy_mysql_change_status` | Manually set application status | Mutating |
+| `dokploy_mysql_save_external_port` | Set or clear the external port | Mutating |
+| `dokploy_mysql_save_environment` | Save environment variables | Mutating |
+
+### MariaDB (13 tools)
+
+| Tool | Description | Type |
+|---|---|---|
+| `dokploy_mariadb_one` | Get MariaDB database details | Read-only |
+| `dokploy_mariadb_create` | Create a new MariaDB database | Mutating |
+| `dokploy_mariadb_update` | Update MariaDB configuration | Mutating |
+| `dokploy_mariadb_remove` | Remove a MariaDB database | Destructive |
+| `dokploy_mariadb_move` | Move database to another project | Mutating |
+| `dokploy_mariadb_deploy` | Deploy the database container | Mutating |
+| `dokploy_mariadb_start` | Start a stopped database | Mutating |
+| `dokploy_mariadb_stop` | Stop a running database | Destructive |
+| `dokploy_mariadb_reload` | Reload the database container | Mutating |
+| `dokploy_mariadb_rebuild` | Rebuild the database from scratch | Mutating |
+| `dokploy_mariadb_change_status` | Manually set application status | Mutating |
+| `dokploy_mariadb_save_external_port` | Set or clear the external port | Mutating |
+| `dokploy_mariadb_save_environment` | Save environment variables | Mutating |
+
+### MongoDB (13 tools)
+
+| Tool | Description | Type |
+|---|---|---|
+| `dokploy_mongo_one` | Get MongoDB database details | Read-only |
+| `dokploy_mongo_create` | Create a new MongoDB database | Mutating |
+| `dokploy_mongo_update` | Update MongoDB configuration | Mutating |
+| `dokploy_mongo_remove` | Remove a MongoDB database | Destructive |
+| `dokploy_mongo_move` | Move database to another project | Mutating |
+| `dokploy_mongo_deploy` | Deploy the database container | Mutating |
+| `dokploy_mongo_start` | Start a stopped database | Mutating |
+| `dokploy_mongo_stop` | Stop a running database | Destructive |
+| `dokploy_mongo_reload` | Reload the database container | Mutating |
+| `dokploy_mongo_rebuild` | Rebuild the database from scratch | Mutating |
+| `dokploy_mongo_change_status` | Manually set application status | Mutating |
+| `dokploy_mongo_save_external_port` | Set or clear the external port | Mutating |
+| `dokploy_mongo_save_environment` | Save environment variables | Mutating |
+
+### Redis (13 tools)
+
+| Tool | Description | Type |
+|---|---|---|
+| `dokploy_redis_one` | Get Redis database details | Read-only |
+| `dokploy_redis_create` | Create a new Redis database | Mutating |
+| `dokploy_redis_update` | Update Redis configuration | Mutating |
+| `dokploy_redis_remove` | Remove a Redis database | Destructive |
+| `dokploy_redis_move` | Move database to another project | Mutating |
+| `dokploy_redis_deploy` | Deploy the database container | Mutating |
+| `dokploy_redis_start` | Start a stopped database | Mutating |
+| `dokploy_redis_stop` | Stop a running database | Destructive |
+| `dokploy_redis_reload` | Reload the database container | Mutating |
+| `dokploy_redis_rebuild` | Rebuild the database from scratch | Mutating |
+| `dokploy_redis_change_status` | Manually set application status | Mutating |
+| `dokploy_redis_save_external_port` | Set or clear the external port | Mutating |
+| `dokploy_redis_save_environment` | Save environment variables | Mutating |
+
+### Deployment (2 tools)
+
+| Tool | Description | Type |
+|---|---|---|
+| `dokploy_deployment_all` | List all deployments for an application | Read-only |
+| `dokploy_deployment_all_by_compose` | List all deployments for a compose service | Read-only |
+
+### Docker (4 tools)
+
+| Tool | Description | Type |
+|---|---|---|
+| `dokploy_docker_get_containers` | List all Docker containers on the server | Read-only |
+| `dokploy_docker_get_config` | Get full config of a container by ID | Read-only |
+| `dokploy_docker_get_containers_by_app_name_match` | Find containers by app name substring | Read-only |
+| `dokploy_docker_get_containers_by_app_label` | Find containers by app label | Read-only |
+
+### Certificates (4 tools)
+
+| Tool | Description | Type |
+|---|---|---|
+| `dokploy_certificate_all` | List all SSL/TLS certificates | Read-only |
+| `dokploy_certificate_one` | Get certificate details by ID | Read-only |
+| `dokploy_certificate_create` | Create a new certificate | Mutating |
+| `dokploy_certificate_remove` | Remove a certificate | Destructive |
+
+### Registry (7 tools)
+
+| Tool | Description | Type |
+|---|---|---|
+| `dokploy_registry_all` | List all container registries | Read-only |
+| `dokploy_registry_one` | Get registry details by ID | Read-only |
+| `dokploy_registry_create` | Create a new registry configuration | Mutating |
+| `dokploy_registry_update` | Update a registry configuration | Mutating |
+| `dokploy_registry_remove` | Remove a registry configuration | Destructive |
+| `dokploy_registry_test` | Test registry connection | Mutating |
+| `dokploy_registry_enable_self_hosted` | Enable the built-in self-hosted registry | Mutating |
+
+### Destination (6 tools)
+
+| Tool | Description | Type |
+|---|---|---|
+| `dokploy_destination_all` | List all S3 backup destinations | Read-only |
+| `dokploy_destination_one` | Get destination details by ID | Read-only |
+| `dokploy_destination_create` | Create a new S3 backup destination | Mutating |
+| `dokploy_destination_update` | Update a backup destination | Mutating |
+| `dokploy_destination_remove` | Remove a backup destination | Destructive |
+| `dokploy_destination_test_connection` | Test S3 destination connection | Mutating |
+
+### Backup (8 tools)
+
+| Tool | Description | Type |
+|---|---|---|
+| `dokploy_backup_one` | Get backup configuration details | Read-only |
+| `dokploy_backup_create` | Create a scheduled backup | Mutating |
+| `dokploy_backup_update` | Update a backup schedule | Mutating |
+| `dokploy_backup_remove` | Remove a backup schedule | Destructive |
+| `dokploy_backup_manual_postgres` | Trigger manual Postgres backup | Mutating |
+| `dokploy_backup_manual_mysql` | Trigger manual MySQL backup | Mutating |
+| `dokploy_backup_manual_mariadb` | Trigger manual MariaDB backup | Mutating |
+| `dokploy_backup_manual_mongo` | Trigger manual MongoDB backup | Mutating |
+
+### Mounts (4 tools)
+
+| Tool | Description | Type |
+|---|---|---|
+| `dokploy_mount_one` | Get mount configuration details | Read-only |
+| `dokploy_mount_create` | Create a new mount (bind, volume, or file) | Mutating |
+| `dokploy_mount_update` | Update a mount configuration | Mutating |
+| `dokploy_mount_remove` | Remove a mount | Destructive |
+
+### Port (4 tools)
+
+| Tool | Description | Type |
+|---|---|---|
+| `dokploy_port_one` | Get port mapping details | Read-only |
+| `dokploy_port_create` | Create a new port mapping | Mutating |
+| `dokploy_port_update` | Update a port mapping | Mutating |
+| `dokploy_port_delete` | Delete a port mapping | Destructive |
+
+### Redirects (4 tools)
+
+| Tool | Description | Type |
+|---|---|---|
+| `dokploy_redirect_one` | Get redirect rule details | Read-only |
+| `dokploy_redirect_create` | Create a new redirect rule | Mutating |
+| `dokploy_redirect_update` | Update a redirect rule | Mutating |
+| `dokploy_redirect_delete` | Delete a redirect rule | Destructive |
+
+### Security (4 tools)
+
+| Tool | Description | Type |
+|---|---|---|
+| `dokploy_security_one` | Get HTTP basic-auth entry details | Read-only |
+| `dokploy_security_create` | Create HTTP basic-auth protection | Mutating |
+| `dokploy_security_update` | Update basic-auth credentials | Mutating |
+| `dokploy_security_delete` | Delete basic-auth protection | Destructive |
+
+### Cluster (4 tools)
+
+| Tool | Description | Type |
+|---|---|---|
+| `dokploy_cluster_get_nodes` | List all Docker Swarm cluster nodes | Read-only |
+| `dokploy_cluster_add_worker` | Get the command to add a worker node | Read-only |
+| `dokploy_cluster_add_manager` | Get the command to add a manager node | Read-only |
+| `dokploy_cluster_remove_worker` | Remove a worker node from the cluster | Destructive |
+
+### Settings (23 tools)
+
+| Tool | Description | Type |
+|---|---|---|
+| `dokploy_settings_reload_server` | Reload the Dokploy server process | Mutating |
+| `dokploy_settings_reload_traefik` | Reload the Traefik reverse proxy | Mutating |
+| `dokploy_settings_clean_unused_images` | Remove unused Docker images | Mutating |
+| `dokploy_settings_clean_unused_volumes` | Remove unused Docker volumes | Destructive |
+| `dokploy_settings_clean_stopped_containers` | Remove all stopped containers | Destructive |
+| `dokploy_settings_clean_docker_builder` | Clean Docker builder cache | Mutating |
+| `dokploy_settings_clean_docker_prune` | Full Docker system prune | Destructive |
+| `dokploy_settings_clean_all` | Clean all unused Docker resources | Destructive |
+| `dokploy_settings_clean_monitoring` | Clear all monitoring data | Destructive |
+| `dokploy_settings_save_ssh_private_key` | Save SSH private key for remote access | Mutating |
+| `dokploy_settings_clean_ssh_private_key` | Remove stored SSH private key | Destructive |
+| `dokploy_settings_assign_domain_server` | Assign domain to the server with SSL | Mutating |
+| `dokploy_settings_update_docker_cleanup` | Configure automatic Docker cleanup | Mutating |
+| `dokploy_settings_read_traefik_config` | Read the main Traefik config | Read-only |
+| `dokploy_settings_update_traefik_config` | Update the main Traefik config | Mutating |
+| `dokploy_settings_read_web_server_traefik_config` | Read web server Traefik config | Read-only |
+| `dokploy_settings_update_web_server_traefik_config` | Update web server Traefik config | Mutating |
+| `dokploy_settings_read_middleware_traefik_config` | Read Traefik middleware config | Read-only |
+| `dokploy_settings_update_middleware_traefik_config` | Update Traefik middleware config | Mutating |
+| `dokploy_settings_check_and_update_image` | Check for and apply image updates | Mutating |
+| `dokploy_settings_update_server` | Update Dokploy to latest version | Mutating |
+| `dokploy_settings_get_version` | Get current Dokploy version | Read-only |
+| `dokploy_settings_read_directories` | Read server directory listing | Read-only |
+| `dokploy_settings_get_openapi_document` | Get the OpenAPI specification | Read-only |
+
+### Auth (14 tools)
+
+| Tool | Description | Type |
+|---|---|---|
+| `dokploy_auth_create_admin` | Create the initial admin account | Mutating |
+| `dokploy_auth_create_user` | Create a user from invitation token | Mutating |
+| `dokploy_auth_login` | Log in with email and password | Mutating |
+| `dokploy_auth_get` | Get current authenticated user profile | Read-only |
+| `dokploy_auth_logout` | Log out and invalidate session | Mutating |
+| `dokploy_auth_update` | Update current user profile | Mutating |
+| `dokploy_auth_generate_token` | Generate a new API token | Mutating |
+| `dokploy_auth_one` | Get user auth info by ID | Read-only |
+| `dokploy_auth_update_by_admin` | Update any user with admin privileges | Mutating |
+| `dokploy_auth_generate_2fa_secret` | Generate 2FA secret and QR code | Read-only |
+| `dokploy_auth_verify_2fa_setup` | Verify and enable 2FA | Mutating |
+| `dokploy_auth_verify_login_2fa` | Verify 2FA PIN during login | Mutating |
+| `dokploy_auth_disable_2fa` | Disable two-factor authentication | Mutating |
+| `dokploy_auth_verify_token` | Verify auth token validity | Mutating |
+
+### Admin (9 tools)
+
+| Tool | Description | Type |
+|---|---|---|
+| `dokploy_admin_one` | Get admin profile and configuration | Read-only |
+| `dokploy_admin_create_user_invitation` | Send user invitation email | Mutating |
+| `dokploy_admin_remove_user` | Remove a user permanently | Destructive |
+| `dokploy_admin_get_user_by_token` | Look up user by invitation token | Read-only |
+| `dokploy_admin_assign_permissions` | Assign granular permissions to a user | Mutating |
+| `dokploy_admin_clean_github_app` | Remove GitHub App integration | Mutating |
+| `dokploy_admin_get_repositories` | List GitHub App repositories | Read-only |
+| `dokploy_admin_get_branches` | List branches for a GitHub repo | Read-only |
+| `dokploy_admin_have_github_configured` | Check if GitHub App is configured | Read-only |
+
+### User (3 tools)
+
+| Tool | Description | Type |
+|---|---|---|
+| `dokploy_user_all` | List all registered users | Read-only |
+| `dokploy_user_by_auth_id` | Get user by authentication ID | Read-only |
+| `dokploy_user_by_user_id` | Get user by user ID | Read-only |
+
+## Architecture
+
+```
+src/
+  index.ts              - Entry point, stdio transport
+  server.ts             - MCP server creation, tool registration
+  api/client.ts         - Fetch-based API client with lazy config
+  tools/_factory.ts     - Tool creation helpers (createTool, postTool, getTool)
+  tools/index.ts        - Aggregates all tool module exports
+  tools/{module}.ts     - 24 domain modules (224 tools total)
+```
+
+**Key patterns:**
+
+- `postTool()` creates tools that call POST endpoints (mutations)
+- `getTool()` creates tools that call GET endpoints (reads), automatically annotated with `readOnlyHint` and `idempotentHint`
+- `createTool()` is the low-level factory for tools with custom handler logic
+- The API client uses native `fetch` with lazy config loading from environment variables
+- Authentication is via `x-api-key` header on every request
+- All tool schemas use Zod v4 with `.describe()` on all parameters
+- Error handling maps HTTP status codes (401, 403, 404, 422) to user-friendly messages
+
+## Development
+
+```bash
+npm run build      # Compile TypeScript to dist/
+npm run dev        # Watch mode with auto-recompile
+npm run typecheck  # Type-check without emitting files
+npm run lint       # Lint with Biome
+npm run lint:fix   # Auto-fix lint issues
+npm run format     # Format with Biome
+npm start          # Run the built server
+```
+
+### Testing
+
+Use the MCP Inspector to test tools interactively:
+
+```bash
+npx @modelcontextprotocol/inspector node dist/index.js
+```
+
+Pass environment variables via the inspector UI or prefix the command:
+
+```bash
+DOKPLOY_URL=https://dokploy.example.com/api DOKPLOY_API_KEY=your-key npx @modelcontextprotocol/inspector node dist/index.js
+```
+
+## Adding a New Tool
+
+1. Find the module file in `src/tools/` (e.g., `application.ts`)
+2. Add a `postTool()` or `getTool()` call with `name`, `title`, `description`, `schema`, and `endpoint`
+3. Use `.describe()` on all Zod schema parameters
+4. Set `annotations: { destructiveHint: true }` for destructive operations
+5. Add the tool to the module's exported array
+6. Run `npm run build`
+
+Example:
+
+```typescript
+const myTool = postTool({
+  name: 'dokploy_application_my_action',
+  title: 'My Action',
+  description: 'Description of what this tool does.',
+  schema: z.object({
+    applicationId: z.string().min(1).describe('The unique application ID'),
+  }),
+  endpoint: '/application.myAction',
+  annotations: { destructiveHint: true }, // if applicable
+})
+```
 
 ## License
 
-MIT. Do whatever you want. Deploy responsibly. Or don't. I'm a README, not a cop.
+MIT

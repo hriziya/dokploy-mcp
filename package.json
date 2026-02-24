@@ -1,6 +1,6 @@
 {
   "name": "dokploy-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MCP Server for the Dokploy API - complete coverage of all endpoints",
   "type": "module",
   "exports": {

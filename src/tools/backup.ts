@@ -11,7 +11,7 @@ const one = getTool({
   title: 'Get Backup Configuration',
   description:
     'Retrieve the full details of a specific backup configuration by its unique ID. Requires the backupId parameter. Returns the backup object including its schedule, prefix, destination, database type, and enabled status.',
-  schema: z.object({ backupId }),
+  schema: z.object({ backupId }).strict(),
   endpoint: '/backup.one',
 })
 
@@ -36,7 +36,7 @@ const create = postTool({
     mysqlId: z.string().optional().describe('MySQL database ID (when databaseType is mysql)'),
     mariadbId: z.string().optional().describe('MariaDB database ID (when databaseType is mariadb)'),
     mongoId: z.string().optional().describe('MongoDB database ID (when databaseType is mongo)'),
-  }),
+  }).strict(),
   endpoint: '/backup.create',
 })
 
@@ -52,7 +52,7 @@ const update = postTool({
     destinationId: z.string().min(1).describe('Destination ID where backups will be stored'),
     database: z.string().min(1).describe('Name of the database to back up'),
     enabled: z.boolean().optional().describe('Whether the backup is enabled'),
-  }),
+  }).strict(),
   endpoint: '/backup.update',
 })
 
@@ -61,7 +61,7 @@ const remove = postTool({
   title: 'Remove Backup Schedule',
   description:
     'Permanently remove a backup schedule configuration from Dokploy. This action is irreversible and stops all future scheduled backups for this configuration. Requires the backupId parameter. Previously created backup files at the destination are not deleted.',
-  schema: z.object({ backupId }),
+  schema: z.object({ backupId }).strict(),
   endpoint: '/backup.remove',
   annotations: { destructiveHint: true },
 })
@@ -71,7 +71,7 @@ const manualBackupPostgres = postTool({
   title: 'Manual Postgres Backup',
   description:
     'Trigger an immediate manual backup of a PostgreSQL database. Requires the backupId of an existing backup configuration that specifies the destination and database details. The backup runs asynchronously and stores the dump file at the configured S3 destination.',
-  schema: z.object({ backupId }),
+  schema: z.object({ backupId }).strict(),
   endpoint: '/backup.manualBackupPostgres',
 })
 
@@ -80,7 +80,7 @@ const manualBackupMySql = postTool({
   title: 'Manual MySQL Backup',
   description:
     'Trigger an immediate manual backup of a MySQL database. Requires the backupId of an existing backup configuration that specifies the destination and database details. The backup runs asynchronously and stores the dump file at the configured S3 destination.',
-  schema: z.object({ backupId }),
+  schema: z.object({ backupId }).strict(),
   endpoint: '/backup.manualBackupMySql',
 })
 
@@ -89,7 +89,7 @@ const manualBackupMariadb = postTool({
   title: 'Manual MariaDB Backup',
   description:
     'Trigger an immediate manual backup of a MariaDB database. Requires the backupId of an existing backup configuration that specifies the destination and database details. The backup runs asynchronously and stores the dump file at the configured S3 destination.',
-  schema: z.object({ backupId }),
+  schema: z.object({ backupId }).strict(),
   endpoint: '/backup.manualBackupMariadb',
 })
 
@@ -98,7 +98,7 @@ const manualBackupMongo = postTool({
   title: 'Manual MongoDB Backup',
   description:
     'Trigger an immediate manual backup of a MongoDB database. Requires the backupId of an existing backup configuration that specifies the destination and database details. The backup runs asynchronously and stores the dump file at the configured S3 destination.',
-  schema: z.object({ backupId }),
+  schema: z.object({ backupId }).strict(),
   endpoint: '/backup.manualBackupMongo',
 })
 

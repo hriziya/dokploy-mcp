@@ -8,7 +8,7 @@ const one = getTool({
   title: 'Get Admin Info',
   description:
     "Get the current admin's profile and configuration information. No parameters required. Returns the admin's email, role, server settings, and other administrative details.",
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/admin.one',
 })
 
@@ -19,7 +19,7 @@ const createUserInvitation = postTool({
     'Create an invitation for a new user by sending them an email with a registration link. Requires the email address of the person to invite. Returns the invitation details including the token that the invited user will use to create their account.',
   schema: z.object({
     email: z.string().email().describe('Email address to send the invitation to'),
-  }),
+  }).strict(),
   endpoint: '/admin.createUserInvitation',
 })
 
@@ -30,7 +30,7 @@ const removeUser = postTool({
     'Permanently remove a user from the Dokploy system. This action is irreversible and will delete the user account and all associated data. Requires the auth ID of the user to remove. Returns a confirmation of the deletion.',
   schema: z.object({
     authId: z.string().min(1).describe('The auth ID of the user to remove'),
-  }),
+  }).strict(),
   endpoint: '/admin.removeUser',
   annotations: { destructiveHint: true },
 })
@@ -42,7 +42,7 @@ const getUserByToken = getTool({
     'Look up a user by their invitation token to verify the invitation is valid. Requires the invitation token string. Returns the user details associated with the token, including their email and invitation status.',
   schema: z.object({
     token: z.string().min(1).describe('The invitation token to look up'),
-  }),
+  }).strict(),
   endpoint: '/admin.getUserByToken',
 })
 
@@ -64,7 +64,7 @@ const assignPermissions = postTool({
       .describe('Whether the user can access Traefik configuration files'),
     canAccessToDocker: z.boolean().describe('Whether the user can access Docker'),
     canAccessToAPI: z.boolean().describe('Whether the user can access the API'),
-  }),
+  }).strict(),
   endpoint: '/admin.assignPermissions',
 })
 
@@ -73,7 +73,7 @@ const cleanGithubApp = postTool({
   title: 'Remove GitHub App Integration',
   description:
     'Remove the currently configured GitHub App integration from Dokploy. This disconnects the GitHub App and clears all associated credentials. No parameters required. Returns a confirmation that the GitHub App configuration has been removed.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/admin.cleanGithubApp',
 })
 
@@ -82,7 +82,7 @@ const getRepositories = getTool({
   title: 'List GitHub Repositories',
   description:
     'List all repositories accessible through the configured GitHub App integration. No parameters required. Returns an array of repository objects with names, owners, and other metadata from the connected GitHub account or organization.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/admin.getRepositories',
 })
 
@@ -94,7 +94,7 @@ const getBranches = getTool({
   schema: z.object({
     repo: z.string().min(1).describe('The repository name'),
     owner: z.string().min(1).describe('The repository owner or organization'),
-  }),
+  }).strict(),
   endpoint: '/admin.getBranches',
 })
 
@@ -103,7 +103,7 @@ const haveGithubConfigured = getTool({
   title: 'Check GitHub App Configuration',
   description:
     'Check whether a GitHub App integration is currently configured in Dokploy. No parameters required. Returns a boolean indicating whether the GitHub App has been set up and is ready to use for repository access.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/admin.haveGithubConfigured',
 })
 

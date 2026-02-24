@@ -8,7 +8,7 @@ const all = getTool({
   title: 'List Certificates',
   description:
     'List all SSL/TLS certificates managed by Dokploy. Returns an array of certificate objects including their names, expiration dates, associated domains, and auto-renewal status. Takes no parameters. Useful for auditing certificate coverage across your deployments.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/certificates.all',
 })
 
@@ -19,7 +19,7 @@ const one = getTool({
     'Get the full details of a specific SSL/TLS certificate by its unique ID. Returns the certificate name, PEM data, private key reference, associated domain, expiration date, and auto-renewal configuration. Requires the certificate ID.',
   schema: z.object({
     certificateId: z.string().min(1).describe('Unique certificate ID'),
-  }),
+  }).strict(),
   endpoint: '/certificates.one',
 })
 
@@ -35,7 +35,7 @@ const create = postTool({
     certificateId: z.string().min(1).optional().describe('Optional certificate ID to assign'),
     certificatePath: z.string().optional().describe('Optional filesystem path for the certificate'),
     autoRenew: z.boolean().optional().describe('Whether to automatically renew the certificate'),
-  }),
+  }).strict(),
   endpoint: '/certificates.create',
 })
 
@@ -46,7 +46,7 @@ const remove = postTool({
     'Permanently remove an SSL/TLS certificate from Dokploy. This action is irreversible and will delete the certificate data and private key. Requires the certificate ID. Any domains using this certificate will lose their TLS configuration.',
   schema: z.object({
     certificateId: z.string().min(1).describe('Unique certificate ID to remove'),
-  }),
+  }).strict(),
   endpoint: '/certificates.remove',
   annotations: { destructiveHint: true },
 })

@@ -11,7 +11,7 @@ const one = getTool({
   title: 'Get Port Mapping',
   description:
     'Retrieve the full configuration of a specific port mapping by its unique ID. Requires the portId parameter. Returns the port mapping object including the published port, target port, protocol (TCP/UDP), and associated application ID.',
-  schema: z.object({ portId }),
+  schema: z.object({ portId }).strict(),
   endpoint: '/port.one',
 })
 
@@ -29,7 +29,7 @@ const create = postTool({
       .optional()
       .default('tcp')
       .describe('Network protocol for the port mapping'),
-  }),
+  }).strict(),
   endpoint: '/port.create',
 })
 
@@ -43,7 +43,7 @@ const update = postTool({
     publishedPort: z.number().optional().describe('New externally published port number'),
     targetPort: z.number().optional().describe('New target port inside the container'),
     protocol: z.enum(['tcp', 'udp']).optional().describe('New network protocol'),
-  }),
+  }).strict(),
   endpoint: '/port.update',
 })
 
@@ -52,7 +52,7 @@ const deleteTool = postTool({
   title: 'Delete Port Mapping',
   description:
     'Permanently delete a port mapping from a Dokploy application. This action is irreversible and removes the external port exposure for the container. Requires the portId parameter. The container port will no longer be accessible on the previously published port.',
-  schema: z.object({ portId }),
+  schema: z.object({ portId }).strict(),
   endpoint: '/port.delete',
   annotations: { destructiveHint: true },
 })

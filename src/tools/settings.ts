@@ -8,7 +8,7 @@ const reloadServer = postTool({
   title: 'Reload Server',
   description:
     'Reload the Dokploy server process to apply configuration changes. No parameters required. Returns the reload status. Use after making changes to server settings that require a restart.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/settings.reloadServer',
 })
 
@@ -17,7 +17,7 @@ const reloadTraefik = postTool({
   title: 'Reload Traefik',
   description:
     'Reload the Traefik reverse proxy to apply routing and configuration changes. No parameters required. Returns the reload status. Use after updating Traefik configuration, domains, or SSL certificates.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/settings.reloadTraefik',
 })
 
@@ -26,8 +26,9 @@ const cleanUnusedImages = postTool({
   title: 'Clean Unused Images',
   description:
     'Remove unused Docker images to free disk space on the server. No parameters required. Returns the amount of space reclaimed and the list of removed images. Only removes images not referenced by any container.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/settings.cleanUnusedImages',
+  annotations: { destructiveHint: true },
 })
 
 const cleanUnusedVolumes = postTool({
@@ -35,7 +36,7 @@ const cleanUnusedVolumes = postTool({
   title: 'Clean Unused Volumes',
   description:
     'Remove unused Docker volumes to free disk space. This action is irreversible and may delete persistent data stored in volumes not attached to any container. No parameters required. Returns the amount of space reclaimed and the list of removed volumes.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/settings.cleanUnusedVolumes',
   annotations: { destructiveHint: true },
 })
@@ -45,7 +46,7 @@ const cleanStoppedContainers = postTool({
   title: 'Clean Stopped Containers',
   description:
     'Remove all stopped Docker containers from the server. This action is irreversible and removes containers in exited or dead state. No parameters required. Returns the list of removed containers and space reclaimed.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/settings.cleanStoppedContainers',
   annotations: { destructiveHint: true },
 })
@@ -55,8 +56,9 @@ const cleanDockerBuilder = postTool({
   title: 'Clean Docker Builder',
   description:
     'Clean the Docker builder cache to free disk space used by intermediate build layers. No parameters required. Returns the amount of space reclaimed. Safe to run without affecting running containers or images.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/settings.cleanDockerBuilder',
+  annotations: { destructiveHint: true },
 })
 
 const cleanDockerPrune = postTool({
@@ -64,7 +66,7 @@ const cleanDockerPrune = postTool({
   title: 'Docker System Prune',
   description:
     'Run a full Docker system prune to remove all unused resources including stopped containers, dangling images, unused networks, and build cache. This action is irreversible. No parameters required. Returns the total space reclaimed.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/settings.cleanDockerPrune',
   annotations: { destructiveHint: true },
 })
@@ -74,7 +76,7 @@ const cleanAll = postTool({
   title: 'Clean All Docker Resources',
   description:
     'Clean all unused Docker resources at once: images, volumes, stopped containers, and builder cache. This action is irreversible and is the most aggressive cleanup option. No parameters required. Returns a summary of all removed resources and total space reclaimed.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/settings.cleanAll',
   annotations: { destructiveHint: true },
 })
@@ -84,7 +86,7 @@ const cleanMonitoring = postTool({
   title: 'Clean Monitoring Data',
   description:
     'Clear all stored monitoring data including metrics and historical performance information. This action is irreversible and resets monitoring history to a clean state. No parameters required. Returns a confirmation of the cleanup.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/settings.cleanMonitoring',
   annotations: { destructiveHint: true },
 })
@@ -96,7 +98,7 @@ const saveSSHPrivateKey = postTool({
     'Save an SSH private key for server access and remote operations. Accepts the sshPrivateKey parameter containing the key content, or null to clear the stored key. Returns a confirmation that the key was saved successfully.',
   schema: z.object({
     sshPrivateKey: z.string().nullable().describe('The SSH private key content, or null to clear'),
-  }),
+  }).strict(),
   endpoint: '/settings.saveSSHPrivateKey',
 })
 
@@ -105,7 +107,7 @@ const cleanSSHPrivateKey = postTool({
   title: 'Clean SSH Private Key',
   description:
     'Remove the stored SSH private key from the server. This action is irreversible and will prevent SSH-based remote operations until a new key is saved. No parameters required. Returns a confirmation of the removal.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/settings.cleanSSHPrivateKey',
   annotations: { destructiveHint: true },
 })
@@ -124,7 +126,7 @@ const assignDomainServer = postTool({
       .enum(['letsencrypt', 'none'])
       .optional()
       .describe('Type of SSL certificate: letsencrypt or none'),
-  }),
+  }).strict(),
   endpoint: '/settings.assignDomainServer',
 })
 
@@ -136,7 +138,7 @@ const updateDockerCleanup = postTool({
   schema: z.object({
     enabled: z.boolean().describe('Whether automatic cleanup is enabled'),
     schedule: z.string().optional().describe('Cron schedule expression for the cleanup job'),
-  }),
+  }).strict(),
   endpoint: '/settings.updateDockerCleanup',
 })
 
@@ -145,7 +147,7 @@ const readTraefikConfig = getTool({
   title: 'Read Traefik Config',
   description:
     'Read the current main Traefik configuration file content. No parameters required. Returns the raw Traefik configuration as a string, which defines the core routing, entrypoints, and provider settings.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/settings.readTraefikConfig',
 })
 
@@ -156,7 +158,7 @@ const updateTraefikConfig = postTool({
     'Update the main Traefik configuration file with new content. Requires the traefikConfig parameter containing the full configuration. Returns a confirmation of the update. A Traefik reload may be needed to apply changes.',
   schema: z.object({
     traefikConfig: z.string().min(1).describe('The new Traefik configuration content'),
-  }),
+  }).strict(),
   endpoint: '/settings.updateTraefikConfig',
 })
 
@@ -165,7 +167,7 @@ const readWebServerTraefikConfig = getTool({
   title: 'Read Web Server Traefik Config',
   description:
     'Read the Traefik configuration specific to the Dokploy web server. No parameters required. Returns the raw web server Traefik configuration as a string, which controls how the Dokploy dashboard and API are exposed.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/settings.readWebServerTraefikConfig',
 })
 
@@ -176,7 +178,7 @@ const updateWebServerTraefikConfig = postTool({
     'Update the Traefik configuration for the Dokploy web server. Requires the traefikConfig parameter containing the full web server configuration. Returns a confirmation of the update. A Traefik reload may be needed to apply changes.',
   schema: z.object({
     traefikConfig: z.string().min(1).describe('The new web server Traefik configuration content'),
-  }),
+  }).strict(),
   endpoint: '/settings.updateWebServerTraefikConfig',
 })
 
@@ -185,7 +187,7 @@ const readMiddlewareTraefikConfig = getTool({
   title: 'Read Middleware Traefik Config',
   description:
     'Read the Traefik middleware configuration that defines request processing rules such as rate limiting, authentication, and header manipulation. No parameters required. Returns the raw middleware configuration as a string.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/settings.readMiddlewareTraefikConfig',
 })
 
@@ -196,7 +198,7 @@ const updateMiddlewareTraefikConfig = postTool({
     'Update the Traefik middleware configuration that controls request processing rules. Requires the traefikConfig parameter containing the full middleware configuration. Returns a confirmation of the update. A Traefik reload may be needed to apply changes.',
   schema: z.object({
     traefikConfig: z.string().min(1).describe('The new middleware Traefik configuration content'),
-  }),
+  }).strict(),
   endpoint: '/settings.updateMiddlewareTraefikConfig',
 })
 
@@ -205,7 +207,7 @@ const checkAndUpdateImage = postTool({
   title: 'Check and Update Image',
   description:
     'Check for available Dokploy Docker image updates and apply them if found. No parameters required. Returns the current and latest image versions along with the update status. This may trigger a server restart if an update is applied.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/settings.checkAndUpdateImage',
 })
 
@@ -214,7 +216,7 @@ const updateServer = postTool({
   title: 'Update Server',
   description:
     'Update the Dokploy server to the latest available version. No parameters required. Returns the update status and new version information. This will restart the server process and may cause brief downtime.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/settings.updateServer',
 })
 
@@ -223,7 +225,7 @@ const getDokployVersion = getTool({
   title: 'Get Dokploy Version',
   description:
     'Get the currently running Dokploy server version. No parameters required. Returns the version string of the installed Dokploy instance. Useful for checking if updates are available.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/settings.getDokployVersion',
 })
 
@@ -232,7 +234,7 @@ const readDirectories = getTool({
   title: 'Read Server Directories',
   description:
     'Read the server directory listing to inspect the file system structure used by Dokploy. No parameters required. Returns a list of directories and their contents on the server where Dokploy stores its data and configurations.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/settings.readDirectories',
 })
 
@@ -241,8 +243,31 @@ const getOpenApiDocument = getTool({
   title: 'Get OpenAPI Document',
   description:
     'Get the Dokploy OpenAPI specification document describing all available API endpoints. No parameters required. Returns the full OpenAPI JSON document including paths, schemas, and authentication requirements.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/settings.getOpenApiDocument',
+})
+
+const readTraefikFile = getTool({
+  name: 'dokploy_settings_read_traefik_file',
+  title: 'Read Traefik File',
+  description:
+    'Read a specific Traefik configuration file from the server file system. Accepts a path parameter to specify which Traefik file to read. Returns the raw file content as a string. Useful for inspecting individual Traefik configuration files beyond the main config.',
+  schema: z.object({
+    path: z.string().min(1).describe('Path to the Traefik configuration file to read'),
+  }).strict(),
+  endpoint: '/settings.readTraefikFile',
+})
+
+const updateTraefikFile = postTool({
+  name: 'dokploy_settings_update_traefik_file',
+  title: 'Update Traefik File',
+  description:
+    'Update a specific Traefik configuration file on the server. Requires the file path and new content. Returns a confirmation. A Traefik reload may be needed to apply changes.',
+  schema: z.object({
+    path: z.string().min(1).describe('Path to the Traefik configuration file to update'),
+    traefikConfig: z.string().min(1).describe('The new file content'),
+  }).strict(),
+  endpoint: '/settings.updateTraefikFile',
 })
 
 // ── export ───────────────────────────────────────────────────────────
@@ -271,4 +296,6 @@ export const settingsTools: ToolDefinition[] = [
   getDokployVersion,
   readDirectories,
   getOpenApiDocument,
+  readTraefikFile,
+  updateTraefikFile,
 ]

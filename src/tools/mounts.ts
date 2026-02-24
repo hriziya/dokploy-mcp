@@ -14,7 +14,7 @@ const one = getTool({
   title: 'Get Mount',
   description:
     'Retrieve the full configuration of a specific mount by its unique ID. Requires the mountId parameter. Returns the mount object including its type (bind, volume, or file), container path, host path or volume name, and associated service ID.',
-  schema: z.object({ mountId }),
+  schema: z.object({ mountId }).strict(),
   endpoint: '/mounts.one',
 })
 
@@ -35,7 +35,7 @@ const create = postTool({
       .optional()
       .default('application')
       .describe('Type of service the mount belongs to'),
-  }),
+  }).strict(),
   endpoint: '/mounts.create',
 })
 
@@ -51,7 +51,7 @@ const update = postTool({
     hostPath: z.string().optional().describe('New host path for bind mounts'),
     volumeName: z.string().optional().describe('New volume name for volume mounts'),
     content: z.string().optional().describe('New file content for file mounts'),
-  }),
+  }).strict(),
   endpoint: '/mounts.update',
 })
 
@@ -60,7 +60,7 @@ const remove = postTool({
   title: 'Remove Mount',
   description:
     'Permanently remove a mount from a Dokploy service. This action is irreversible and detaches the mount from the service container. Requires the mountId parameter. The underlying host path, volume, or file content is not automatically deleted.',
-  schema: z.object({ mountId }),
+  schema: z.object({ mountId }).strict(),
   endpoint: '/mounts.remove',
   annotations: { destructiveHint: true },
 })

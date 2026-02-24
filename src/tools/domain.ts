@@ -26,7 +26,7 @@ const create = postTool({
     domainType: z.string().optional().describe('Domain type'),
     previewDeploymentId: z.string().optional().describe('Preview deployment ID'),
     internalPath: z.string().optional().describe('Internal path for routing'),
-  }),
+  }).strict(),
   endpoint: '/domain.create',
 })
 
@@ -37,7 +37,7 @@ const one = getTool({
     'Get detailed information about a single domain by its ID. Returns the full domain configuration including hostname, HTTPS settings, certificate type, routing rules, and the associated application or compose service.',
   schema: z.object({
     domainId: z.string().min(1).describe('The unique domain ID'),
-  }),
+  }).strict(),
   endpoint: '/domain.one',
 })
 
@@ -48,7 +48,7 @@ const byApplicationId = getTool({
     'List all domains attached to a specific application. Requires the application ID. Returns an array of domain objects with their hostnames, HTTPS settings, certificate types, and routing configurations.',
   schema: z.object({
     applicationId: z.string().min(1).describe('The unique application ID'),
-  }),
+  }).strict(),
   endpoint: '/domain.byApplicationId',
 })
 
@@ -59,7 +59,7 @@ const byComposeId = getTool({
     'List all domains attached to a specific compose service. Requires the compose service ID. Returns an array of domain objects with their hostnames, HTTPS settings, certificate types, and routing configurations.',
   schema: z.object({
     composeId: z.string().min(1).describe('The unique compose service ID'),
-  }),
+  }).strict(),
   endpoint: '/domain.byComposeId',
 })
 
@@ -84,7 +84,7 @@ const update = postTool({
     serviceName: z.string().optional().describe('Service name within a compose deployment'),
     domainType: z.string().optional().describe('Domain type'),
     internalPath: z.string().optional().describe('Internal path for routing'),
-  }),
+  }).strict(),
   endpoint: '/domain.update',
 })
 
@@ -95,7 +95,7 @@ const deleteDomain = postTool({
     'Permanently delete a domain configuration. This removes the domain routing and any associated SSL certificates. This action is irreversible. Requires the domain ID.',
   schema: z.object({
     domainId: z.string().min(1).describe('The unique domain ID to delete'),
-  }),
+  }).strict(),
   endpoint: '/domain.delete',
   annotations: { destructiveHint: true },
 })
@@ -108,7 +108,7 @@ const validateDomain = postTool({
   schema: z.object({
     domain: z.string().min(1).describe('The domain name to validate'),
     serverIp: z.string().optional().describe('Expected server IP address for DNS validation'),
-  }),
+  }).strict(),
   endpoint: '/domain.validateDomain',
 })
 
@@ -119,7 +119,7 @@ const generateDomain = postTool({
     "Generate a default domain for an application using the server's configured base domain. This automatically creates and attaches a subdomain to the specified application. Requires the application ID. Returns the generated domain configuration.",
   schema: z.object({
     applicationId: z.string().min(1).describe('The unique application ID'),
-  }),
+  }).strict(),
   endpoint: '/domain.generateDomain',
 })
 
@@ -130,7 +130,7 @@ const generateWildcard = postTool({
     "Generate a wildcard domain for an application using the server's configured base domain. A wildcard domain matches all subdomains, enabling dynamic subdomain routing. Requires the application ID. Returns the generated wildcard domain configuration.",
   schema: z.object({
     applicationId: z.string().min(1).describe('The unique application ID'),
-  }),
+  }).strict(),
   endpoint: '/domain.generateWildcard',
 })
 

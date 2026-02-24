@@ -8,7 +8,7 @@ const all = getTool({
   title: 'List All Users',
   description:
     'List all users registered in the Dokploy instance. No parameters required. Returns an array of user objects including their IDs, emails, roles, and permission details.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/user.all',
 })
 
@@ -19,7 +19,7 @@ const byAuthId = getTool({
     'Get a specific user by their authentication ID. Requires the auth ID string. Returns the full user profile including email, role, permissions, and associated project and service access.',
   schema: z.object({
     authId: z.string().min(1).describe('The auth ID of the user to retrieve'),
-  }),
+  }).strict(),
   endpoint: '/user.byAuthId',
 })
 
@@ -30,7 +30,7 @@ const byUserId = getTool({
     'Get a specific user by their user ID. Requires the user ID string. Returns the full user profile including email, role, permissions, and associated project and service access.',
   schema: z.object({
     userId: z.string().min(1).describe('The user ID of the user to retrieve'),
-  }),
+  }).strict(),
   endpoint: '/user.byUserId',
 })
 

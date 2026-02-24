@@ -12,7 +12,7 @@ const one = getTool({
   title: 'Get Redis Details',
   description:
     'Retrieve the full configuration and status details of a Redis database managed by Dokploy. Requires the unique Redis database ID. Returns all metadata including name, image, resource limits, environment variables, and current application status.',
-  schema: z.object({ redisId: rdId }),
+  schema: z.object({ redisId: rdId }).strict(),
   endpoint: `${DB}.one`,
 })
 
@@ -29,7 +29,7 @@ const create = postTool({
     dockerImage: z.string().optional().describe('Docker image (default: redis:7)'),
     description: z.string().nullable().optional().describe('Optional description'),
     serverId: z.string().nullable().optional().describe('Target server ID (null for local)'),
-  }),
+  }).strict(),
   endpoint: `${DB}.create`,
 })
 
@@ -51,7 +51,7 @@ const update = postTool({
     command: z.string().nullable().optional().describe('Custom start command'),
     env: z.string().nullable().optional().describe('Environment variables'),
     externalPort: z.number().nullable().optional().describe('External port'),
-  }),
+  }).strict(),
   endpoint: `${DB}.update`,
 })
 
@@ -60,7 +60,7 @@ const remove = postTool({
   title: 'Remove Redis Database',
   description:
     'Permanently delete a Redis database from Dokploy. Requires the Redis database ID. This is a destructive operation that removes the container, all associated data, and configuration. Returns the operation status confirming deletion.',
-  schema: z.object({ redisId: rdId }),
+  schema: z.object({ redisId: rdId }).strict(),
   endpoint: `${DB}.remove`,
   annotations: { destructiveHint: true },
 })
@@ -73,7 +73,7 @@ const move = postTool({
   schema: z.object({
     redisId: rdId,
     targetProjectId: z.string().min(1).describe('Destination project ID'),
-  }),
+  }).strict(),
   endpoint: `${DB}.move`,
 })
 
@@ -82,7 +82,7 @@ const deploy = postTool({
   title: 'Deploy Redis Database',
   description:
     'Deploy a Redis database in Dokploy, pulling the configured Docker image and starting the container. Requires the Redis database ID. This triggers a full deployment lifecycle including image pull, container creation, and startup. Returns the deployment operation status.',
-  schema: z.object({ redisId: rdId }),
+  schema: z.object({ redisId: rdId }).strict(),
   endpoint: `${DB}.deploy`,
 })
 
@@ -91,7 +91,7 @@ const start = postTool({
   title: 'Start Redis Database',
   description:
     'Start a previously stopped Redis database container in Dokploy. Requires the Redis database ID. The container will resume with its existing data and configuration. Returns the operation status.',
-  schema: z.object({ redisId: rdId }),
+  schema: z.object({ redisId: rdId }).strict(),
   endpoint: `${DB}.start`,
 })
 
@@ -100,7 +100,7 @@ const stop = postTool({
   title: 'Stop Redis Database',
   description:
     'Stop a currently running Redis database container in Dokploy. Requires the Redis database ID. The container will be gracefully stopped but its data and configuration are preserved for future restarts. Returns the operation status.',
-  schema: z.object({ redisId: rdId }),
+  schema: z.object({ redisId: rdId }).strict(),
   endpoint: `${DB}.stop`,
   annotations: { destructiveHint: true },
 })
@@ -113,7 +113,7 @@ const reload = postTool({
   schema: z.object({
     redisId: rdId,
     appName: z.string().min(1).describe('App-level identifier'),
-  }),
+  }).strict(),
   endpoint: `${DB}.reload`,
 })
 
@@ -122,7 +122,7 @@ const rebuild = postTool({
   title: 'Rebuild Redis Database',
   description:
     'Rebuild the Redis database container from scratch in Dokploy. Requires the Redis database ID. This tears down the existing container and recreates it using the current configuration, which is useful when the container state has become inconsistent. Returns the operation status.',
-  schema: z.object({ redisId: rdId }),
+  schema: z.object({ redisId: rdId }).strict(),
   endpoint: `${DB}.rebuild`,
 })
 
@@ -136,7 +136,7 @@ const changeStatus = postTool({
     applicationStatus: z
       .enum(['idle', 'running', 'done', 'error'])
       .describe('New application status'),
-  }),
+  }).strict(),
   endpoint: `${DB}.changeStatus`,
 })
 
@@ -148,7 +148,7 @@ const saveExternalPort = postTool({
   schema: z.object({
     redisId: rdId,
     externalPort: z.number().nullable().describe('External port number (null to remove)'),
-  }),
+  }).strict(),
   endpoint: `${DB}.saveExternalPort`,
 })
 
@@ -160,7 +160,7 @@ const saveEnvironment = postTool({
   schema: z.object({
     redisId: rdId,
     env: z.string().nullable().optional().describe('Environment variables as a string'),
-  }),
+  }).strict(),
   endpoint: `${DB}.saveEnvironment`,
 })
 

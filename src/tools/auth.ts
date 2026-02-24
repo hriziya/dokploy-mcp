@@ -11,7 +11,7 @@ const createAdmin = postTool({
   schema: z.object({
     email: z.string().email().describe('Email address for the admin account'),
     password: z.string().min(8).describe('Password for the admin account (min 8 characters)'),
-  }),
+  }).strict(),
   endpoint: '/auth.createAdmin',
 })
 
@@ -24,7 +24,7 @@ const createUser = postTool({
     password: z.string().min(8).describe('Password for the new user (min 8 characters)'),
     id: z.string().min(1).describe('The invitation or user ID'),
     token: z.string().min(1).describe('The invitation token'),
-  }),
+  }).strict(),
   endpoint: '/auth.createUser',
 })
 
@@ -36,7 +36,7 @@ const login = postTool({
   schema: z.object({
     email: z.string().email().describe('Email address of the account'),
     password: z.string().min(8).describe('Account password (min 8 characters)'),
-  }),
+  }).strict(),
   endpoint: '/auth.login',
 })
 
@@ -45,7 +45,7 @@ const get = getTool({
   title: 'Get Current User',
   description:
     "Get the currently authenticated user's profile information. No parameters required. Returns the user's email, role, 2FA status, and other profile fields associated with the active session.",
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/auth.get',
 })
 
@@ -54,7 +54,7 @@ const logout = postTool({
   title: 'Logout',
   description:
     'Log out the current user session and invalidate the active authentication token. No parameters required. Returns a confirmation that the session has been terminated.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/auth.logout',
 })
 
@@ -70,7 +70,7 @@ const update = postTool({
     rol: z.enum(['admin', 'user']).optional().describe('Role to assign: admin or user'),
     image: z.string().optional().describe('Profile image URL'),
     is2FAEnabled: z.boolean().optional().describe('Whether two-factor authentication is enabled'),
-  }),
+  }).strict(),
   endpoint: '/auth.update',
 })
 
@@ -79,7 +79,7 @@ const generateToken = postTool({
   title: 'Generate API Token',
   description:
     'Generate a new API token for the currently authenticated user. The token can be used for programmatic API access via the x-api-key header. No parameters required. Returns the generated token string.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/auth.generateToken',
 })
 
@@ -90,7 +90,7 @@ const one = getTool({
     "Get a specific user's authentication information by their auth ID. Requires the auth ID of the target user. Returns the user's email, role, 2FA status, and other auth-related fields.",
   schema: z.object({
     id: z.string().min(1).describe('The auth ID of the user to retrieve'),
-  }),
+  }).strict(),
   endpoint: '/auth.one',
 })
 
@@ -106,7 +106,7 @@ const updateByAdmin = postTool({
     rol: z.enum(['admin', 'user']).optional().describe('Role to assign: admin or user'),
     image: z.string().optional().describe('Profile image URL'),
     is2FAEnabled: z.boolean().optional().describe('Whether two-factor authentication is enabled'),
-  }),
+  }).strict(),
   endpoint: '/auth.updateByAdmin',
 })
 
@@ -115,7 +115,7 @@ const generate2FASecret = getTool({
   title: 'Generate 2FA Secret',
   description:
     'Generate a new two-factor authentication secret for the current user. This is the first step in setting up 2FA with an authenticator app. No parameters required. Returns the secret key and a QR code URL that can be scanned by an authenticator app.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/auth.generate2FASecret',
 })
 
@@ -127,7 +127,7 @@ const verify2FASetup = postTool({
   schema: z.object({
     pin: z.string().min(6).describe('The 6-digit PIN from the authenticator app'),
     secret: z.string().min(1).describe('The 2FA secret to verify against'),
-  }),
+  }).strict(),
   endpoint: '/auth.verify2FASetup',
 })
 
@@ -139,7 +139,7 @@ const verifyLogin2FA = postTool({
   schema: z.object({
     pin: z.string().min(6).describe('The 6-digit PIN from the authenticator app'),
     id: z.string().min(1).describe('The auth ID of the user logging in'),
-  }),
+  }).strict(),
   endpoint: '/auth.verifyLogin2FA',
 })
 
@@ -148,7 +148,7 @@ const disable2FA = postTool({
   title: 'Disable 2FA',
   description:
     "Disable two-factor authentication for the currently authenticated user's account. No parameters required. Returns a confirmation that 2FA has been removed from the account. Future logins will no longer require a 2FA PIN.",
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/auth.disable2FA',
 })
 
@@ -157,7 +157,7 @@ const verifyToken = postTool({
   title: 'Verify Auth Token',
   description:
     'Verify the validity of the current authentication token. No parameters required. Returns whether the token is valid and has not expired. Useful for checking if a session is still active before making other API calls.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/auth.verifyToken',
 })
 

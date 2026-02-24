@@ -11,7 +11,7 @@ const one = getTool({
   title: 'Get Redirect Rule',
   description:
     'Get details of a specific redirect rule by its unique ID. Requires the redirectId parameter. Returns the full redirect configuration including regex pattern, replacement URL, and whether it is a permanent (301) or temporary (302) redirect.',
-  schema: z.object({ redirectId }),
+  schema: z.object({ redirectId }).strict(),
   endpoint: '/redirects.one',
 })
 
@@ -25,7 +25,7 @@ const create = postTool({
     replacement: z.string().min(1).describe('Replacement URL or path for matched requests'),
     permanent: z.boolean().describe('Whether the redirect is permanent (301) or temporary (302)'),
     applicationId: z.string().min(1).describe('ID of the application to add the redirect to'),
-  }),
+  }).strict(),
   endpoint: '/redirects.create',
 })
 
@@ -42,7 +42,7 @@ const update = postTool({
       .boolean()
       .optional()
       .describe('Whether the redirect is permanent (301) or temporary (302)'),
-  }),
+  }).strict(),
   endpoint: '/redirects.update',
 })
 
@@ -51,7 +51,7 @@ const deleteTool = postTool({
   title: 'Delete Redirect Rule',
   description:
     'Delete a redirect rule permanently by its ID. This action is irreversible and the redirect will stop being applied immediately. Requires the redirectId parameter. Returns a confirmation of the deletion.',
-  schema: z.object({ redirectId }),
+  schema: z.object({ redirectId }).strict(),
   endpoint: '/redirects.delete',
   annotations: { destructiveHint: true },
 })

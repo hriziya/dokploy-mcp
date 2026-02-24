@@ -12,7 +12,7 @@ const one = getTool({
   title: 'Get MongoDB Details',
   description:
     'Retrieve the full configuration and status details of a MongoDB database managed by Dokploy. Requires the unique MongoDB database ID. Returns all metadata including name, image, resource limits, environment variables, and current application status.',
-  schema: z.object({ mongoId: mgId }),
+  schema: z.object({ mongoId: mgId }).strict(),
   endpoint: `${DB}.one`,
 })
 
@@ -30,7 +30,7 @@ const create = postTool({
     dockerImage: z.string().optional().describe('Docker image (default: mongo:6)'),
     description: z.string().nullable().optional().describe('Optional description'),
     serverId: z.string().nullable().optional().describe('Target server ID (null for local)'),
-  }),
+  }).strict(),
   endpoint: `${DB}.create`,
 })
 
@@ -52,7 +52,7 @@ const update = postTool({
     command: z.string().nullable().optional().describe('Custom start command'),
     env: z.string().nullable().optional().describe('Environment variables'),
     externalPort: z.number().nullable().optional().describe('External port'),
-  }),
+  }).strict(),
   endpoint: `${DB}.update`,
 })
 
@@ -61,7 +61,7 @@ const remove = postTool({
   title: 'Remove MongoDB Database',
   description:
     'Permanently delete a MongoDB database from Dokploy. Requires the MongoDB database ID. This is a destructive operation that removes the container, all associated data, and configuration. Returns the operation status confirming deletion.',
-  schema: z.object({ mongoId: mgId }),
+  schema: z.object({ mongoId: mgId }).strict(),
   endpoint: `${DB}.remove`,
   annotations: { destructiveHint: true },
 })
@@ -74,7 +74,7 @@ const move = postTool({
   schema: z.object({
     mongoId: mgId,
     targetProjectId: z.string().min(1).describe('Destination project ID'),
-  }),
+  }).strict(),
   endpoint: `${DB}.move`,
 })
 
@@ -83,7 +83,7 @@ const deploy = postTool({
   title: 'Deploy MongoDB Database',
   description:
     'Deploy a MongoDB database in Dokploy, pulling the configured Docker image and starting the container. Requires the MongoDB database ID. This triggers a full deployment lifecycle including image pull, container creation, and startup. Returns the deployment operation status.',
-  schema: z.object({ mongoId: mgId }),
+  schema: z.object({ mongoId: mgId }).strict(),
   endpoint: `${DB}.deploy`,
 })
 
@@ -92,7 +92,7 @@ const start = postTool({
   title: 'Start MongoDB Database',
   description:
     'Start a previously stopped MongoDB database container in Dokploy. Requires the MongoDB database ID. The container will resume with its existing data and configuration. Returns the operation status.',
-  schema: z.object({ mongoId: mgId }),
+  schema: z.object({ mongoId: mgId }).strict(),
   endpoint: `${DB}.start`,
 })
 
@@ -101,7 +101,7 @@ const stop = postTool({
   title: 'Stop MongoDB Database',
   description:
     'Stop a currently running MongoDB database container in Dokploy. Requires the MongoDB database ID. The container will be gracefully stopped but its data and configuration are preserved for future restarts. Returns the operation status.',
-  schema: z.object({ mongoId: mgId }),
+  schema: z.object({ mongoId: mgId }).strict(),
   endpoint: `${DB}.stop`,
   annotations: { destructiveHint: true },
 })
@@ -114,7 +114,7 @@ const reload = postTool({
   schema: z.object({
     mongoId: mgId,
     appName: z.string().min(1).describe('App-level identifier'),
-  }),
+  }).strict(),
   endpoint: `${DB}.reload`,
 })
 
@@ -123,7 +123,7 @@ const rebuild = postTool({
   title: 'Rebuild MongoDB Database',
   description:
     'Rebuild the MongoDB database container from scratch in Dokploy. Requires the MongoDB database ID. This tears down the existing container and recreates it using the current configuration, which is useful when the container state has become inconsistent. Returns the operation status.',
-  schema: z.object({ mongoId: mgId }),
+  schema: z.object({ mongoId: mgId }).strict(),
   endpoint: `${DB}.rebuild`,
 })
 
@@ -137,7 +137,7 @@ const changeStatus = postTool({
     applicationStatus: z
       .enum(['idle', 'running', 'done', 'error'])
       .describe('New application status'),
-  }),
+  }).strict(),
   endpoint: `${DB}.changeStatus`,
 })
 
@@ -149,7 +149,7 @@ const saveExternalPort = postTool({
   schema: z.object({
     mongoId: mgId,
     externalPort: z.number().nullable().describe('External port number (null to remove)'),
-  }),
+  }).strict(),
   endpoint: `${DB}.saveExternalPort`,
 })
 
@@ -161,7 +161,7 @@ const saveEnvironment = postTool({
   schema: z.object({
     mongoId: mgId,
     env: z.string().nullable().optional().describe('Environment variables as a string'),
-  }),
+  }).strict(),
   endpoint: `${DB}.saveEnvironment`,
 })
 

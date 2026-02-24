@@ -8,7 +8,7 @@ const getContainers = getTool({
   title: 'List Docker Containers',
   description:
     'List all Docker containers running on the Dokploy server. Returns container metadata including names, images, status, ports, and resource usage. Takes no parameters. Useful for getting an overview of all running and stopped containers.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/docker.getContainers',
 })
 
@@ -19,7 +19,7 @@ const getConfig = getTool({
     'Get the full configuration of a specific Docker container by its ID. Returns detailed container settings including environment variables, volumes, network configuration, and resource limits. Requires the Docker container ID.',
   schema: z.object({
     containerId: z.string().min(1).describe('The Docker container ID'),
-  }),
+  }).strict(),
   endpoint: '/docker.getConfig',
 })
 
@@ -30,7 +30,7 @@ const getContainersByAppNameMatch = getTool({
     'Find Docker containers whose name matches the given application name. Performs a substring match against container names to locate containers belonging to a specific app. Requires the app name string. Returns matching container objects with their metadata.',
   schema: z.object({
     appName: z.string().min(1).describe('The app name to match against container names'),
-  }),
+  }).strict(),
   endpoint: '/docker.getContainersByAppNameMatch',
 })
 
@@ -41,7 +41,7 @@ const getContainersByAppLabel = getTool({
     'Find Docker containers by their application label metadata. Searches for containers that have a matching app label, which is the recommended way to identify containers managed by Dokploy. Requires the app name label value. Returns matching container objects.',
   schema: z.object({
     appName: z.string().min(1).describe('The app name label to search for'),
-  }),
+  }).strict(),
   endpoint: '/docker.getContainersByAppLabel',
 })
 

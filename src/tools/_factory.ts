@@ -20,6 +20,7 @@ export interface ToolDefinition {
   annotations: ToolAnnotations
   handler: (input: Record<string, unknown>) => Promise<{
     content: { type: 'text'; text: string }[]
+    structuredContent?: Record<string, unknown>
     isError?: boolean
   }>
 }
@@ -27,6 +28,7 @@ export interface ToolDefinition {
 function success(data: unknown) {
   return {
     content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }],
+    structuredContent: data as Record<string, unknown>,
   }
 }
 

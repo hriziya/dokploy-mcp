@@ -8,7 +8,7 @@ const all = getTool({
   title: 'List All Projects',
   description:
     'List all projects in the Dokploy instance. Takes no parameters and returns an array of project objects, each containing the project ID, name, description, and associated services. Useful for discovering available projects before performing operations on them.',
-  schema: z.object({}),
+  schema: z.object({}).strict(),
   endpoint: '/project.all',
 })
 
@@ -19,7 +19,7 @@ const one = getTool({
     'Retrieve detailed information about a single Dokploy project by its unique ID. Returns the full project object including its name, description, environment variables, and all associated services such as applications, databases, and compose stacks.',
   schema: z.object({
     projectId: z.string().min(1).describe('The unique project ID'),
-  }),
+  }).strict(),
   endpoint: '/project.one',
 })
 
@@ -31,7 +31,7 @@ const create = postTool({
   schema: z.object({
     name: z.string().min(1).describe('The name of the project'),
     description: z.string().nullable().optional().describe('Optional project description'),
-  }),
+  }).strict(),
   endpoint: '/project.create',
 })
 
@@ -45,7 +45,7 @@ const update = postTool({
     name: z.string().optional().describe('New project name'),
     description: z.string().nullable().optional().describe('New project description'),
     env: z.string().nullable().optional().describe('Environment variables for the project'),
-  }),
+  }).strict(),
   endpoint: '/project.update',
 })
 
@@ -67,11 +67,11 @@ const duplicate = postTool({
         z.object({
           id: z.string().min(1).describe('The service ID'),
           type: z.string().min(1).describe('The service type'),
-        }),
+        }).strict(),
       )
       .optional()
       .describe('Specific services to include in the duplicate'),
-  }),
+  }).strict(),
   endpoint: '/project.duplicate',
 })
 
@@ -82,7 +82,7 @@ const remove = postTool({
     'Permanently remove a Dokploy project and all its associated resources including applications, databases, and compose stacks. This action is irreversible and will delete all data within the project. Requires the project ID to remove.',
   schema: z.object({
     projectId: z.string().min(1).describe('The unique project ID to remove'),
-  }),
+  }).strict(),
   endpoint: '/project.remove',
   annotations: { destructiveHint: true },
 })
