@@ -1,35 +1,35 @@
 interface ClientConfig {
-  baseUrl: string;
-  apiKey: string;
-  timeout: number;
+  baseUrl: string
+  apiKey: string
+  timeout: number
 }
 
 function getConfig(): ClientConfig {
-  const baseUrl = process.env.DOKPLOY_URL;
-  const apiKey = process.env.DOKPLOY_API_KEY;
+  const baseUrl = process.env.DOKPLOY_URL
+  const apiKey = process.env.DOKPLOY_API_KEY
 
   if (!baseUrl) {
     throw new Error(
-      "DOKPLOY_URL environment variable is required. Set it to your Dokploy instance URL (e.g., https://dokploy.example.com/api)"
-    );
+      'DOKPLOY_URL environment variable is required. Set it to your Dokploy instance URL (e.g., https://dokploy.example.com/api)',
+    )
   }
   if (!apiKey) {
     throw new Error(
-      "DOKPLOY_API_KEY environment variable is required. Generate one in Dokploy Settings > API."
-    );
+      'DOKPLOY_API_KEY environment variable is required. Generate one in Dokploy Settings > API.',
+    )
   }
 
   return {
-    baseUrl: baseUrl.replace(/\/+$/, ""),
+    baseUrl: baseUrl.replace(/\/+$/, ''),
     apiKey,
-    timeout: parseInt(process.env.DOKPLOY_TIMEOUT || "30000", 10),
-  };
+    timeout: Number.parseInt(process.env.DOKPLOY_TIMEOUT || '30000', 10),
+  }
 }
 
-let _config: ClientConfig | null = null;
+let _config: ClientConfig | null = null
 function config(): ClientConfig {
-  if (!_config) _config = getConfig();
-  return _config;
+  _config ??= getConfig()
+  return _config
 }
 
 export class ApiError extends Error {
@@ -37,79 +37,87 @@ export class ApiError extends Error {
     public readonly status: number,
     public readonly statusText: string,
     public readonly body: unknown,
-    public readonly endpoint: string
+    public readonly endpoint: string,
   ) {
     const msg =
-      typeof body === "object" && body !== null && "message" in body
+      typeof body === 'object' && body !== null && 'message' in body
         ? (body as { message: string }).message
-        : statusText;
-    super(`Dokploy API error (${status}): ${msg}`);
-    this.name = "ApiError";
+        : statusText
+    super(`Dokploy API error (${status}): ${msg}`)
+    this.name = 'ApiError'
   }
 }
 
-async function request<T = unknown>(
-  method: "GET" | "POST",
-  path: string,
-  body?: unknown
-): Promise<T> {
-  const { baseUrl, apiKey, timeout } = config();
-
-  let url = `${baseUrl}${path}`;
-  if (method === "GET" && body && typeof body === "object") {
-    const params = new URLSearchParams();
-    for (const [k, v] of Object.entries(body as Record<string, unknown>)) {
-      if (v !== undefined && v !== null) params.set(k, String(v));
-    }
-    const qs = params.toString();
-    if (qs) url += `?${qs}`;
+function buildQueryString(body: unknown): string {
+  if (!body || typeof body !== 'object') {
+    return ''
   }
+  const params = new URLSearchParams()
+  for (const [k, v] of Object.entries(body as Record<string, unknown>)) {
+    if (v !== undefined && v !== null) {
+      params.set(k, String(v))
+    }
+  }
+  return params.toString()
+}
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeout);
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException || (error instanceof Error && error.name === 'AbortError')
+}
+
+async function request<T = unknown>(
+  method: 'GET' | 'POST',
+  path: string,
+  body?: unknown,
+): Promise<T> {
+  const { baseUrl, apiKey, timeout } = config()
+
+  const qs = method === 'GET' ? buildQueryString(body) : ''
+  const url = qs ? `${baseUrl}${path}?${qs}` : `${baseUrl}${path}`
+
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeout)
 
   try {
     const response = await fetch(url, {
       method,
       headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        "x-api-key": apiKey,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'x-api-key': apiKey,
       },
-      body: method === "POST" && body ? JSON.stringify(body) : undefined,
+      body: method === 'POST' && body ? JSON.stringify(body) : undefined,
       signal: controller.signal,
-    });
+    })
 
-    const text = await response.text();
-    let data: unknown;
+    const text = await response.text()
+    let data: unknown
     try {
-      data = JSON.parse(text);
+      data = JSON.parse(text)
     } catch {
-      data = text;
+      data = text
     }
 
     if (!response.ok) {
-      throw new ApiError(response.status, response.statusText, data, path);
+      throw new ApiError(response.status, response.statusText, data, path)
     }
 
-    return data as T;
+    return data as T
   } catch (error) {
-    if (error instanceof ApiError) throw error;
-    if (
-      error instanceof DOMException ||
-      (error instanceof Error && error.name === "AbortError")
-    ) {
-      throw new Error(`Request to ${path} timed out after ${timeout}ms`);
+    if (error instanceof ApiError) {
+      throw error
     }
-    throw error;
+    if (isAbortError(error)) {
+      throw new Error(`Request to ${path} timed out after ${timeout}ms`)
+    }
+    throw error
   } finally {
-    clearTimeout(timer);
+    clearTimeout(timer)
   }
 }
 
 export const api = {
   get: <T = unknown>(path: string, params?: Record<string, unknown>) =>
-    request<T>("GET", path, params),
-  post: <T = unknown>(path: string, body?: unknown) =>
-    request<T>("POST", path, body),
-};
+    request<T>('GET', path, params),
+  post: <T = unknown>(path: string, body?: unknown) => request<T>('POST', path, body),
+}
