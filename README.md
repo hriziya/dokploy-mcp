@@ -13,11 +13,13 @@ A [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server that p
 ## Features
 
 - **Complete API coverage** across all 24 Dokploy modules (224 tools)
+- **Interactive setup wizard** -- run `npx dokploy-mcp setup` and start using it in seconds
+- **Auto-config detection** -- picks up credentials from env vars, config file, or Dokploy CLI
 - **Type-safe schemas** with Zod v4 validation on every parameter
 - **Tool annotations** (`readOnlyHint`, `destructiveHint`, `idempotentHint`) so clients can warn before destructive operations
 - **Lazy configuration loading** -- environment variables are validated on first API call, not at startup
 - **Comprehensive error handling** with actionable messages mapped from HTTP status codes
-- **Minimal dependencies** -- only `@modelcontextprotocol/sdk` and `zod`
+- **Minimal dependencies** -- only `@modelcontextprotocol/sdk`, `zod`, and `@clack/prompts`
 
 ## Installation
 
@@ -31,9 +33,46 @@ Or run directly:
 npx dokploy-mcp
 ```
 
-## Configuration
+## Quick Start
 
-### Environment Variables
+```bash
+npx dokploy-mcp setup
+```
+
+The setup wizard will:
+1. Prompt for your Dokploy server URL and API key
+2. Validate the credentials
+3. Save configuration to `~/.config/dokploy-mcp/config.json`
+4. Show the MCP client config to add
+
+After setup, add this minimal config to your MCP client:
+
+```json
+{
+  "mcpServers": {
+    "dokploy": {
+      "command": "npx",
+      "args": ["dokploy-mcp"]
+    }
+  }
+}
+```
+
+No environment variables needed -- credentials are loaded from the saved config file.
+
+## Configuration Resolution
+
+Credentials are resolved in this order (first match wins):
+
+1. **Environment variables** -- `DOKPLOY_URL` and `DOKPLOY_API_KEY`
+2. **Config file** -- `~/.config/dokploy-mcp/config.json` (created by `setup`)
+3. **Dokploy CLI** -- Auto-detected from globally installed `@dokploy/cli`
+
+If you have the [Dokploy CLI](https://github.com/Dokploy/cli) installed and authenticated, the MCP server will automatically use those credentials with zero configuration.
+
+## Alternative: Manual Configuration
+
+For CI/CD pipelines or when you prefer environment variables over the config file, you can set credentials directly. Environment variables always take priority over the config file.
 
 | Variable | Required | Description | Default |
 |---|---|---|---|
@@ -41,11 +80,36 @@ npx dokploy-mcp
 | `DOKPLOY_API_KEY` | Yes | API key from Dokploy Settings > API | -- |
 | `DOKPLOY_TIMEOUT` | No | Request timeout in milliseconds | `30000` |
 
+## CLI Commands
+
+| Command | Description |
+|---|---|
+| `npx dokploy-mcp` | Start MCP server (stdio transport) |
+| `npx dokploy-mcp setup` | Interactive setup wizard |
+| `npx dokploy-mcp version` | Show version |
+
+Aliases: `init` and `auth` are aliases for `setup`.
+
 ## Usage with MCP Clients
 
 ### Claude Desktop
 
 Add the following to your Claude Desktop configuration file (`claude_desktop_config.json`):
+
+**With setup (recommended):**
+
+```json
+{
+  "mcpServers": {
+    "dokploy": {
+      "command": "npx",
+      "args": ["dokploy-mcp"]
+    }
+  }
+}
+```
+
+**With environment variables:**
 
 ```json
 {
@@ -66,6 +130,21 @@ Add the following to your Claude Desktop configuration file (`claude_desktop_con
 
 Add the following to your `.mcp.json` configuration file:
 
+**With setup (recommended):**
+
+```json
+{
+  "mcpServers": {
+    "dokploy": {
+      "command": "npx",
+      "args": ["dokploy-mcp"]
+    }
+  }
+}
+```
+
+**With environment variables:**
+
 ```json
 {
   "mcpServers": {
@@ -85,6 +164,21 @@ Add the following to your `.mcp.json` configuration file:
 
 Add to `~/.cursor/mcp.json` or `.cursor/mcp.json` in your project:
 
+**With setup (recommended):**
+
+```json
+{
+  "mcpServers": {
+    "dokploy": {
+      "command": "npx",
+      "args": ["dokploy-mcp"]
+    }
+  }
+}
+```
+
+**With environment variables:**
+
 ```json
 {
   "mcpServers": {
@@ -103,6 +197,21 @@ Add to `~/.cursor/mcp.json` or `.cursor/mcp.json` in your project:
 ### VS Code
 
 Add to `.vscode/mcp.json`:
+
+**With setup (recommended):**
+
+```json
+{
+  "servers": {
+    "dokploy": {
+      "command": "npx",
+      "args": ["dokploy-mcp"]
+    }
+  }
+}
+```
+
+**With environment variables:**
 
 ```json
 {
@@ -505,9 +614,13 @@ For the complete reference with full descriptions and parameter details, see [do
 
 ```
 src/
-  index.ts              - Entry point, stdio transport
+  index.ts              - Entry point, routes CLI vs MCP server
   server.ts             - MCP server creation, tool registration
-  api/client.ts         - Fetch-based API client with lazy config
+  api/client.ts         - Fetch-based API client with config resolver
+  config/types.ts       - Config types and platform paths
+  config/resolver.ts    - Config resolution chain (env -> file -> CLI)
+  cli/index.ts          - CLI command router
+  cli/setup.ts          - Interactive setup wizard (@clack/prompts TUI)
   tools/_factory.ts     - Tool creation helpers (createTool, postTool, getTool)
   tools/index.ts        - Aggregates all tool module exports
   tools/{module}.ts     - 24 domain modules (224 tools total)
@@ -518,10 +631,11 @@ src/
 - `postTool()` creates tools that call POST endpoints (mutations)
 - `getTool()` creates tools that call GET endpoints (reads), automatically annotated with `readOnlyHint` and `idempotentHint`
 - `createTool()` is the low-level factory for tools with custom handler logic
-- The API client uses native `fetch` with lazy config loading from environment variables
+- The API client uses native `fetch` with config resolution: env vars -> config file -> Dokploy CLI
 - Authentication is via `x-api-key` header on every request
 - All tool schemas use Zod v4 with `.describe()` on all parameters
 - Error handling maps HTTP status codes (401, 403, 404, 422) to user-friendly messages
+- CLI setup uses `@clack/prompts` for a modern terminal UI
 
 ## Development
 

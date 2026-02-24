@@ -1,3 +1,5 @@
+import { resolveConfig } from '../config/resolver.js'
+
 interface ClientConfig {
   baseUrl: string
   apiKey: string
@@ -5,24 +7,25 @@ interface ClientConfig {
 }
 
 function getConfig(): ClientConfig {
-  const baseUrl = process.env.DOKPLOY_URL
-  const apiKey = process.env.DOKPLOY_API_KEY
+  const resolved = resolveConfig()
 
-  if (!baseUrl) {
+  if (!resolved) {
     throw new Error(
-      'DOKPLOY_URL environment variable is required. Set it to your Dokploy instance URL (e.g., https://dokploy.example.com/api)',
-    )
-  }
-  if (!apiKey) {
-    throw new Error(
-      'DOKPLOY_API_KEY environment variable is required. Generate one in Dokploy Settings > API.',
+      [
+        'Dokploy MCP is not configured. Set up credentials using one of these methods:',
+        '',
+        '  1. Run: npx dokploy-mcp setup',
+        '  2. Set environment variables: DOKPLOY_URL and DOKPLOY_API_KEY',
+        '',
+        'Get your API key from Dokploy Settings > API.',
+      ].join('\n'),
     )
   }
 
   return {
-    baseUrl: baseUrl.replace(/\/+$/, ''),
-    apiKey,
-    timeout: Number.parseInt(process.env.DOKPLOY_TIMEOUT || '30000', 10),
+    baseUrl: resolved.url.replace(/\/+$/, ''),
+    apiKey: resolved.apiKey,
+    timeout: resolved.timeout,
   }
 }
 
