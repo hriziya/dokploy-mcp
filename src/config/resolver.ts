@@ -96,7 +96,7 @@ function readConfigFile(): ConfigFile | null {
 /**
  * Reads the Dokploy CLI global config.
  * The CLI stores { url, token } where url is the panel URL (not the API URL).
- * Converts: appends /api to the URL and maps token to apiKey.
+ * Converts: appends /api/trpc to the URL and maps token to apiKey.
  */
 function readDokployCliConfig(): DokployConfig | null {
   try {
@@ -128,11 +128,8 @@ function readDokployCliConfig(): DokployConfig | null {
       return null
     }
 
-    // The CLI stores the panel URL; append /api if not already present
-    let url = record.url.replace(/\/+$/, '')
-    if (!url.endsWith('/api')) {
-      url = `${url}/api`
-    }
+    // The CLI stores the panel URL; derive the tRPC API base URL
+    const url = `${record.url.replace(/\/+$/, '')}/api/trpc`
 
     return { url, apiKey: record.token }
   } catch {
@@ -170,24 +167,37 @@ export interface ValidationResult {
 }
 
 /**
+ * Builds a list of candidate base URLs to try for validation.
+ * Handles bare panel URLs, /api, and /api/trpc suffixes.
+ */
+function buildCandidateUrls(url: string): string[] {
+  const normalized = url.replace(/\/+$/, '')
+
+  if (normalized.endsWith('/api/trpc')) {
+    return [normalized]
+  }
+  if (normalized.endsWith('/api')) {
+    // User may have meant /api/trpc — try both
+    return [`${normalized}/trpc`, normalized]
+  }
+  // Bare panel URL — try the most common path first
+  return [`${normalized}/api/trpc`, `${normalized}/api`, normalized]
+}
+
+/**
  * Validates Dokploy credentials by making API requests.
  * Tries to detect the correct URL format and validates the API key.
  */
 export async function validateCredentials(url: string, apiKey: string): Promise<ValidationResult> {
   const normalizedUrl = url.replace(/\/+$/, '')
-  const hasApiSuffix = normalizedUrl.endsWith('/api')
+  const candidates = buildCandidateUrls(normalizedUrl)
 
-  // Build list of base URLs to try
-  const baseUrls: string[] = hasApiSuffix
-    ? [normalizedUrl]
-    : [`${normalizedUrl}/api`, normalizedUrl]
-
-  for (const baseUrl of baseUrls) {
+  for (const baseUrl of candidates) {
     const result = await tryValidate(baseUrl, apiKey)
     if (result.valid) {
       return result
     }
-    // If we got an auth error (not a network/404 error), don't try the next URL
+    // Auth error means the URL was right but the key was wrong — stop trying
     if (
       result.error &&
       !result.error.includes('not reachable') &&
@@ -217,11 +227,32 @@ function mapAuthError(status: number, statusText: string): ValidationResult {
   return { valid: false, error: `API returned HTTP ${status}: ${statusText}` }
 }
 
+/**
+ * Unwraps a tRPC response envelope: { result: { data: { json: T } } } → T
+ * Falls back to the raw data if it's not in tRPC format.
+ */
+function unwrapTrpc(data: unknown): unknown {
+  if (typeof data !== 'object' || data === null) return data
+  const outer = data as Record<string, unknown>
+  if (typeof outer.result !== 'object' || outer.result === null) return data
+  const result = outer.result as Record<string, unknown>
+  if (typeof result.data !== 'object' || result.data === null) return data
+  const inner = result.data as Record<string, unknown>
+  return 'json' in inner ? inner.json : data
+}
+
 function parseUser(data: unknown): string | undefined {
-  if (typeof data !== 'object' || data === null) return undefined
-  const record = data as Record<string, unknown>
+  const unwrapped = unwrapTrpc(data)
+  if (typeof unwrapped !== 'object' || unwrapped === null) return undefined
+  const record = unwrapped as Record<string, unknown>
+  // Top-level email/name
   if (typeof record.email === 'string') return record.email
-  if (typeof record.name === 'string') return record.name
+  // Nested user object (tRPC user.get response)
+  if (typeof record.user === 'object' && record.user !== null) {
+    const user = record.user as Record<string, unknown>
+    if (typeof user.email === 'string') return user.email
+    if (typeof user.firstName === 'string') return user.firstName
+  }
   return undefined
 }
 
@@ -239,9 +270,10 @@ async function fetchVersion(baseUrl: string, apiKey: string): Promise<string | u
     if (!response.ok) return undefined
 
     const data: unknown = await response.json()
-    if (typeof data === 'string') return data
-    if (typeof data === 'object' && data !== null) {
-      const record = data as Record<string, unknown>
+    const unwrapped = unwrapTrpc(data)
+    if (typeof unwrapped === 'string') return unwrapped
+    if (typeof unwrapped === 'object' && unwrapped !== null) {
+      const record = unwrapped as Record<string, unknown>
       if (typeof record.version === 'string') return record.version
     }
     return undefined
@@ -257,7 +289,8 @@ async function tryValidate(baseUrl: string, apiKey: string): Promise<ValidationR
   const timer = setTimeout(() => controller.abort(), 10_000)
 
   try {
-    const authResponse = await fetch(`${baseUrl}/auth.get`, {
+    // Use user.get — the standard Dokploy tRPC endpoint for current user
+    const authResponse = await fetch(`${baseUrl}/user.get`, {
       method: 'GET',
       headers: apiHeaders(apiKey),
       signal: controller.signal,
