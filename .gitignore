@@ -52,6 +52,7 @@ coverage
 .cache
 tmp
 temp
+.old/**
 
 # GeoIP database (downloaded from R2, ~60MB)
 data/geoip/
