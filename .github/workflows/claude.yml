@@ -42,7 +42,6 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          timeout_minutes: "30"
 
   # Auto-review -- reviews every new/updated PR automatically
   review:
@@ -64,7 +63,6 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          timeout_minutes: "30"
           prompt: |
             Review this PR. Focus on:
             - Correctness and potential bugs
