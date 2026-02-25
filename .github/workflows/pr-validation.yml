@@ -30,11 +30,30 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Test
-        run: npm test
+      - name: Test with coverage
+        run: npm run test:coverage
 
       - name: Build
         run: npm run build
+
+      - name: PR Summary
+        if: always()
+        run: |
+          echo "## PR Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f "coverage/coverage-summary.json" ]; then
+            node -e "
+              const c = require('./coverage/coverage-summary.json').total;
+              const fmt = (m) => m.pct + '%';
+              console.log('### Coverage');
+              console.log('| Metric | Coverage |');
+              console.log('| --- | --- |');
+              console.log('| Statements | ' + fmt(c.statements) + ' |');
+              console.log('| Branches | ' + fmt(c.branches) + ' |');
+              console.log('| Functions | ' + fmt(c.functions) + ' |');
+              console.log('| Lines | ' + fmt(c.lines) + ' |');
+            " >> $GITHUB_STEP_SUMMARY
+          fi
 
   security-audit:
     name: Security Audit
