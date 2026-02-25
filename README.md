@@ -6,6 +6,8 @@
 
 MCP server for the Dokploy API. 196 tools across 23 modules. Your AI agent can now deploy apps, manage databases, configure domains, and handle backups -- without you touching a dashboard.
 
+Forked from [Dokploy/mcp](https://github.com/Dokploy/mcp) and rebuilt with expanded API coverage, tool annotations, Zod v4 schemas, lazy config loading, and a setup wizard. The original had 67 tools. This one has 196. Standing on shoulders, etc.
+
 ## Quick Start
 
 Grab your API key from **Dokploy Settings > Profile > API/CLI** and add this to your MCP client config:
@@ -207,6 +209,24 @@ Test with the MCP Inspector:
 npx @modelcontextprotocol/inspector node dist/index.js
 ```
 
+## Standing on the Shoulders of People Who Actually Did the Work
+
+This project is a fork of [Dokploy/mcp](https://github.com/Dokploy/mcp). I rewrote most of it, tripled the tool count, and added things like a setup wizard and config resolution chain -- but "rewrote" is easy when someone else already built the thing you're rewriting.
+
+[Mauricio Siu](https://github.com/Siumauricio) created [Dokploy](https://dokploy.com) itself -- a genuinely impressive open-source PaaS -- and kicked off the MCP server repo. Without Dokploy, there's no API. Without the API, there's no MCP server. Without the MCP server, I'd have had to start from zero instead of "from scratch."
+
+[Henrique Andrade](https://github.com/andradehenrique) did the actual heavy lifting on the original MCP. Projects, applications, PostgreSQL, MySQL, domains -- that was all him. 15 commits, every merged PR. The kind of contributor who doesn't just open issues, he closes them.
+
+And to everyone who opened PRs on the original repo -- merged or not -- your code and ideas shaped what this became:
+
+[Joshua Macauley](https://github.com/Macawls) · [lucasleal-developer](https://github.com/lucasleal-developer) · [Nour Eddine Hamaidi](https://github.com/HenkDz) · [Corey](https://github.com/limehawk) · [Azil0ne](https://github.com/Azilone)
+
+Unmerged PRs are still blueprints. Someone reads your compose tools PR and thinks "right, I should cover that." Someone sees your consolidation approach and borrows the idea. That's how open source actually works -- not through clean merge histories, but through stolen inspiration with better commit messages.
+
+Cheers to all of you. I owe you mass-produced coffee at minimum.
+
 ## License
 
 MIT - [Vibe Code](https://vcode.sh)
+
+Original work by [Henrique Andrade](https://github.com/andradehenrique) under Apache 2.0 -- see [LICENSE-ORIGINAL](LICENSE-ORIGINAL).

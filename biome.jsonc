@@ -78,7 +78,7 @@
     }
   },
   "files": {
-    "includes": ["src/**"],
+    "includes": ["src/**", "tests/**"],
     "ignoreUnknown": true
   },
   "assist": {
@@ -90,7 +90,7 @@
   },
   "overrides": [
     {
-      "includes": ["src/tools/_factory.ts"],
+      "includes": ["src/tools/_factory.ts", "src/tools/_database.ts"],
       "linter": {
         "rules": {
           "style": {

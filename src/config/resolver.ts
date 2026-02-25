@@ -2,8 +2,34 @@ import { execSync } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
+import { z } from 'zod'
+
 import type { ConfigFile, DokployConfig, ResolvedConfig } from './types.js'
 import { getConfigDir, getConfigFilePath } from './types.js'
+
+const configFileSchema = z.object({
+  url: z.string().min(1),
+  apiKey: z.string().min(1),
+})
+
+const dokployCliSchema = z.object({
+  url: z.string().min(1),
+  token: z.string().min(1),
+})
+
+const userSchema = z
+  .object({
+    email: z.string().optional(),
+    user: z
+      .object({
+        email: z.string().optional(),
+        firstName: z.string().optional(),
+      })
+      .optional(),
+  })
+  .passthrough()
+
+const versionSchema = z.union([z.string(), z.object({ version: z.string() }).passthrough()])
 
 /**
  * Normalizes a Dokploy URL to the tRPC API base.
@@ -84,26 +110,8 @@ function readConfigFile(): ConfigFile | null {
   try {
     const content = readFileSync(filePath, 'utf8')
     const parsed: unknown = JSON.parse(content)
-
-    if (
-      typeof parsed !== 'object' ||
-      parsed === null ||
-      !('url' in parsed) ||
-      !('apiKey' in parsed)
-    ) {
-      return null
-    }
-
-    const record = parsed as Record<string, unknown>
-    if (typeof record.url !== 'string' || typeof record.apiKey !== 'string') {
-      return null
-    }
-
-    if (!(record.url && record.apiKey)) {
-      return null
-    }
-
-    return { url: record.url, apiKey: record.apiKey }
+    const result = configFileSchema.safeParse(parsed)
+    return result.success ? result.data : null
   } catch {
     return null
   }
@@ -125,26 +133,8 @@ function readDokployCliConfig(): DokployConfig | null {
 
     const content = readFileSync(cliConfigPath, 'utf8')
     const parsed: unknown = JSON.parse(content)
-
-    if (
-      typeof parsed !== 'object' ||
-      parsed === null ||
-      !('url' in parsed) ||
-      !('token' in parsed)
-    ) {
-      return null
-    }
-
-    const record = parsed as Record<string, unknown>
-    if (typeof record.url !== 'string' || typeof record.token !== 'string') {
-      return null
-    }
-
-    if (!(record.url && record.token)) {
-      return null
-    }
-
-    return { url: record.url, apiKey: record.token }
+    const result = dokployCliSchema.safeParse(parsed)
+    return result.success ? { url: result.data.url, apiKey: result.data.token } : null
   } catch {
     return null
   }
@@ -256,17 +246,10 @@ function unwrapTrpc(data: unknown): unknown {
 
 function parseUser(data: unknown): string | undefined {
   const unwrapped = unwrapTrpc(data)
-  if (typeof unwrapped !== 'object' || unwrapped === null) return undefined
-  const record = unwrapped as Record<string, unknown>
-  // Top-level email/name
-  if (typeof record.email === 'string') return record.email
-  // Nested user object (tRPC user.get response)
-  if (typeof record.user === 'object' && record.user !== null) {
-    const user = record.user as Record<string, unknown>
-    if (typeof user.email === 'string') return user.email
-    if (typeof user.firstName === 'string') return user.firstName
-  }
-  return undefined
+  const result = userSchema.safeParse(unwrapped)
+  if (!result.success) return undefined
+  const { email, user } = result.data
+  return email ?? user?.email ?? user?.firstName
 }
 
 async function fetchVersion(baseUrl: string, apiKey: string): Promise<string | undefined> {
@@ -284,12 +267,9 @@ async function fetchVersion(baseUrl: string, apiKey: string): Promise<string | u
 
     const data: unknown = await response.json()
     const unwrapped = unwrapTrpc(data)
-    if (typeof unwrapped === 'string') return unwrapped
-    if (typeof unwrapped === 'object' && unwrapped !== null) {
-      const record = unwrapped as Record<string, unknown>
-      if (typeof record.version === 'string') return record.version
-    }
-    return undefined
+    const result = versionSchema.safeParse(unwrapped)
+    if (!result.success) return undefined
+    return typeof result.data === 'string' ? result.data : result.data.version
   } catch {
     return undefined
   } finally {

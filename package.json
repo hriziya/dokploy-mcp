@@ -1,6 +1,6 @@
 {
   "name": "@vibetools/dokploy-mcp",
-  "version": "0.5.0",
+  "version": "1.0.0",
   "description": "MCP Server for the Dokploy API - complete coverage of all endpoints",
   "type": "module",
   "exports": {
@@ -19,6 +19,8 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
@@ -34,7 +36,8 @@
   "devDependencies": {
     "@biomejs/biome": "^2.4.4",
     "@types/node": "^22.19.11",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
   },
   "engines": {
     "node": ">=22.0.0"

@@ -1,5 +1,7 @@
 import { resolveConfig } from '../config/resolver.js'
 
+const DEFAULT_TIMEOUT = 30_000
+
 interface ClientConfig {
   baseUrl: string
   apiKey: string
@@ -25,7 +27,7 @@ function getConfig(): ClientConfig {
   return {
     baseUrl: resolved.url.replace(/\/+$/, ''),
     apiKey: resolved.apiKey,
-    timeout: resolved.timeout,
+    timeout: resolved.timeout || DEFAULT_TIMEOUT,
   }
 }
 
@@ -52,18 +54,18 @@ export class ApiError extends Error {
 }
 
 function buildQueryString(body: unknown): string {
-  if (!body || typeof body !== 'object') {
-    return ''
-  }
-  const params = new URLSearchParams()
-  for (const [k, v] of Object.entries(body as Record<string, unknown>)) {
-    if (v !== undefined && v !== null) {
-      params.set(k, String(v))
-    }
-  }
-  return params.toString()
+  if (!body || typeof body !== 'object') return ''
+  const entries = Object.entries(body as Record<string, unknown>)
+    .filter(([, v]) => v != null)
+    .map(([k, v]): [string, string] => [k, String(v)])
+  return entries.length > 0 ? new URLSearchParams(entries).toString() : ''
 }
 
+/**
+ * Checks whether an error was caused by an aborted fetch.
+ * Both checks are needed: older Node versions throw DOMException,
+ * while newer versions throw an Error with name 'AbortError'.
+ */
 function isAbortError(error: unknown): boolean {
   return error instanceof DOMException || (error instanceof Error && error.name === 'AbortError')
 }

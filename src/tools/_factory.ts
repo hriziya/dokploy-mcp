@@ -44,22 +44,24 @@ function error(message: string, details?: string) {
   }
 }
 
+const ERROR_MAP: Record<number, [string, (err: ApiError) => string]> = {
+  401: ['Authentication failed', () => 'Check your DOKPLOY_API_KEY environment variable.'],
+  403: ['Permission denied', () => 'Your API key lacks permission for this operation.'],
+  404: ['Resource not found', (err) => err.message],
+  422: [
+    'Validation error',
+    (err) =>
+      typeof err.body === 'object' && err.body !== null ? JSON.stringify(err.body) : err.message,
+  ],
+}
+
 function mapApiError(err: ApiError) {
-  switch (err.status) {
-    case 401:
-      return error('Authentication failed', 'Check your DOKPLOY_API_KEY environment variable.')
-    case 403:
-      return error('Permission denied', 'Your API key lacks permission for this operation.')
-    case 404:
-      return error('Resource not found', err.message)
-    case 422:
-      return error(
-        'Validation error',
-        typeof err.body === 'object' && err.body !== null ? JSON.stringify(err.body) : err.message,
-      )
-    default:
-      return error(`Dokploy API error (${err.status})`, err.message)
+  const entry = ERROR_MAP[err.status]
+  if (entry) {
+    const [message, getDetails] = entry
+    return error(message, getDetails(err))
   }
+  return error(`Dokploy API error (${err.status})`, err.message)
 }
 
 export function createTool<T extends AnyZodObject>(def: {
@@ -67,7 +69,7 @@ export function createTool<T extends AnyZodObject>(def: {
   title: string
   description: string
   schema: T
-  annotations: ToolAnnotations
+  annotations?: Partial<ToolAnnotations>
   handler: (params: { input: z.infer<T>; api: typeof api }) => Promise<unknown>
 }): ToolDefinition {
   return {
@@ -106,7 +108,7 @@ export function postTool<T extends AnyZodObject>(opts: {
     title: opts.title,
     description: opts.description,
     schema: opts.schema,
-    annotations: { openWorldHint: true, ...opts.annotations },
+    annotations: opts.annotations,
     handler: async ({ input, api }) => api.post(opts.endpoint, input),
   })
 }
@@ -127,7 +129,6 @@ export function getTool<T extends AnyZodObject>(opts: {
     annotations: {
       readOnlyHint: true,
       idempotentHint: true,
-      openWorldHint: true,
       ...opts.annotations,
     },
     handler: async ({ input, api }) => {

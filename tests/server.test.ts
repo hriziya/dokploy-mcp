@@ -1,0 +1,9 @@
+import { describe, expect, it } from 'vitest'
+import { createServer } from '../src/server.js'
+
+describe('createServer', () => {
+  it('creates a server instance', () => {
+    const server = createServer()
+    expect(server).toBeDefined()
+  })
+})
