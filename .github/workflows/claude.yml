@@ -39,13 +39,9 @@ jobs:
           fetch-depth: 1
 
       - name: Run Claude
-        uses: grll/claude-code-action@beta
+        uses: anthropics/claude-code-action@v1
         with:
-          use_oauth: true
-          claude_access_token: ${{ secrets.CLAUDE_ACCESS_TOKEN }}
-          claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
-          claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
-          secrets_admin_pat: ${{ secrets.SECRETS_ADMIN_PAT }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           timeout_minutes: "30"
 
   # Auto-review -- reviews every new/updated PR automatically
@@ -65,15 +61,11 @@ jobs:
           fetch-depth: 1
 
       - name: Review PR
-        uses: grll/claude-code-action@beta
+        uses: anthropics/claude-code-action@v1
         with:
-          use_oauth: true
-          claude_access_token: ${{ secrets.CLAUDE_ACCESS_TOKEN }}
-          claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
-          claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
-          secrets_admin_pat: ${{ secrets.SECRETS_ADMIN_PAT }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           timeout_minutes: "30"
-          direct_prompt: |
+          prompt: |
             Review this PR. Focus on:
             - Correctness and potential bugs
             - Code style consistency (check CLAUDE.md for project conventions)
