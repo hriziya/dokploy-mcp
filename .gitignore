@@ -48,6 +48,5 @@ temp
 
 # Sensitive / local-only
 .claude/
-CLAUDE.md
 src/.env
 voice.md
