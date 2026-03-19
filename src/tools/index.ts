@@ -9,6 +9,7 @@ import { deploymentTools } from './deployment.js'
 import { destinationTools } from './destination.js'
 import { dockerTools } from './docker.js'
 import { domainTools } from './domain.js'
+import { environmentTools } from './environment.js'
 import { mariadbTools } from './mariadb.js'
 import { mongoTools } from './mongo.js'
 import { mountsTools } from './mounts.js'
@@ -25,6 +26,7 @@ import { userTools } from './user.js'
 
 export const allTools: ToolDefinition[] = [
   ...projectTools,
+  ...environmentTools,
   ...applicationTools,
   ...composeTools,
   ...domainTools,

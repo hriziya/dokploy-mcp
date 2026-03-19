@@ -48,9 +48,15 @@ export function createDatabaseTools(config: DatabaseConfig): ToolDefinition[] {
     z
       .object({
         name: z.string().min(1).describe('Display name for the database'),
-        appName: z.string().min(1).describe('Unique app-level identifier'),
+        appName: z
+          .string()
+          .optional()
+          .describe('Unique app-level identifier (auto-generated if not provided)'),
         ...createFields.shape,
-        projectId: z.string().min(1).describe('Project ID to create the database in'),
+        environmentId: z
+          .string()
+          .min(1)
+          .describe('Environment ID to create the database in (get from project.one response)'),
         dockerImage: z.string().optional().describe(`Docker image (default: ${defaultImage})`),
         description: z.string().nullable().optional().describe('Optional description'),
         serverId: z.string().nullable().optional().describe('Target server ID (null for local)'),
@@ -69,10 +75,14 @@ export function createDatabaseTools(config: DatabaseConfig): ToolDefinition[] {
         appName: z.string().min(1).optional().describe('App-level identifier'),
         description: z.string().nullable().optional().describe('Description'),
         dockerImage: z.string().optional().describe('Docker image'),
-        memoryReservation: z.number().nullable().optional().describe('Memory reservation in MB'),
-        memoryLimit: z.number().nullable().optional().describe('Memory limit in MB'),
-        cpuReservation: z.number().nullable().optional().describe('CPU reservation'),
-        cpuLimit: z.number().nullable().optional().describe('CPU limit'),
+        memoryReservation: z
+          .string()
+          .nullable()
+          .optional()
+          .describe('Memory reservation (e.g. "256m")'),
+        memoryLimit: z.string().nullable().optional().describe('Memory limit (e.g. "512m")'),
+        cpuReservation: z.string().nullable().optional().describe('CPU reservation (e.g. "0.5")'),
+        cpuLimit: z.string().nullable().optional().describe('CPU limit (e.g. "1.0")'),
         command: z.string().nullable().optional().describe('Custom start command'),
         env: z.string().nullable().optional().describe('Environment variables'),
         externalPort: z.number().nullable().optional().describe('External port'),
@@ -95,7 +105,10 @@ export function createDatabaseTools(config: DatabaseConfig): ToolDefinition[] {
     z
       .object({
         [idField]: z.string().min(1).describe(`Unique ${displayName} database ID`),
-        targetProjectId: z.string().min(1).describe('Destination project ID'),
+        targetEnvironmentId: z
+          .string()
+          .min(1)
+          .describe('Destination environment ID to move the database to'),
       })
       .strict(),
   )

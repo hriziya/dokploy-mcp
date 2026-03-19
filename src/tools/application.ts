@@ -11,7 +11,12 @@ const create = postTool({
   schema: z
     .object({
       name: z.string().min(1).describe('The name of the application'),
-      projectId: z.string().min(1).describe('The project ID to create the application in'),
+      environmentId: z
+        .string()
+        .min(1)
+        .describe(
+          'The environment ID to create the application in (get from project.one response)',
+        ),
       appName: z.string().optional().describe('Custom app name (auto-generated if not provided)'),
       description: z.string().nullable().optional().describe('Application description'),
       serverId: z.string().nullable().optional().describe('Target server ID for deployment'),
@@ -46,10 +51,14 @@ const update = postTool({
       description: z.string().nullable().optional().describe('Application description'),
       env: z.string().nullable().optional().describe('Environment variables'),
       buildArgs: z.string().nullable().optional().describe('Docker build arguments'),
-      memoryReservation: z.number().nullable().optional().describe('Memory reservation in bytes'),
-      memoryLimit: z.number().nullable().optional().describe('Memory limit in bytes'),
-      cpuReservation: z.number().nullable().optional().describe('CPU reservation'),
-      cpuLimit: z.number().nullable().optional().describe('CPU limit'),
+      memoryReservation: z
+        .string()
+        .nullable()
+        .optional()
+        .describe('Memory reservation (e.g. "256m")'),
+      memoryLimit: z.string().nullable().optional().describe('Memory limit (e.g. "512m")'),
+      cpuReservation: z.string().nullable().optional().describe('CPU reservation (e.g. "0.5")'),
+      cpuLimit: z.string().nullable().optional().describe('CPU limit (e.g. "1.0")'),
       title: z.string().nullable().optional().describe('Display title'),
       enabled: z.boolean().optional().describe('Whether the application is enabled'),
       subtitle: z.string().nullable().optional().describe('Display subtitle'),
@@ -138,7 +147,10 @@ const move = postTool({
   schema: z
     .object({
       applicationId: z.string().min(1).describe('The unique application ID to move'),
-      targetProjectId: z.string().min(1).describe('The target project ID'),
+      targetEnvironmentId: z
+        .string()
+        .min(1)
+        .describe('The target environment ID to move the application to'),
     })
     .strict(),
   endpoint: '/application.move',
@@ -152,6 +164,8 @@ const deploy = postTool({
   schema: z
     .object({
       applicationId: z.string().min(1).describe('The unique application ID to deploy'),
+      title: z.string().optional().describe('Title for the deployment log'),
+      description: z.string().optional().describe('Description for the deployment log'),
     })
     .strict(),
   endpoint: '/application.deploy',
@@ -165,6 +179,8 @@ const redeploy = postTool({
   schema: z
     .object({
       applicationId: z.string().min(1).describe('The unique application ID to redeploy'),
+      title: z.string().optional().describe('Title for the deployment log'),
+      description: z.string().optional().describe('Description for the deployment log'),
     })
     .strict(),
   endpoint: '/application.redeploy',
@@ -273,10 +289,26 @@ const saveBuildType = postTool({
     .object({
       applicationId: z.string().min(1).describe('The unique application ID'),
       buildType: z
-        .enum(['dockerfile', 'heroku', 'nixpacks', 'buildpacks', 'docker'])
+        .enum([
+          'dockerfile',
+          'heroku_buildpacks',
+          'paketo_buildpacks',
+          'nixpacks',
+          'static',
+          'railpack',
+        ])
         .describe('The build type to use'),
+      dockerfile: z.string().nullable().optional().describe('Dockerfile path or content'),
       dockerContextPath: z.string().optional().describe('Docker build context path'),
       dockerBuildStage: z.string().optional().describe('Docker multi-stage build target'),
+      herokuVersion: z.string().optional().describe('Heroku version to use'),
+      railpackVersion: z.string().optional().describe('Railpack version to use'),
+      publishDirectory: z
+        .string()
+        .nullable()
+        .optional()
+        .describe('Publish directory for static builds'),
+      isStaticSpa: z.boolean().optional().describe('Whether this is a static SPA'),
     })
     .strict(),
   endpoint: '/application.saveBuildType',
@@ -292,6 +324,8 @@ const saveEnvironment = postTool({
       applicationId: z.string().min(1).describe('The unique application ID'),
       env: z.string().nullable().optional().describe('Environment variables'),
       buildArgs: z.string().nullable().optional().describe('Docker build arguments'),
+      buildSecrets: z.string().nullable().optional().describe('Docker build secrets'),
+      createEnvFile: z.boolean().optional().describe('Whether to create an .env file'),
     })
     .strict(),
   endpoint: '/application.saveEnvironment',
@@ -361,6 +395,7 @@ const saveBitbucketProvider = postTool({
       bitbucketBuildPath: z.string().optional().describe('Build path within the repo'),
       bitbucketOwner: z.string().optional().describe('Bitbucket repository owner'),
       bitbucketRepository: z.string().optional().describe('Bitbucket repository name'),
+      bitbucketRepositorySlug: z.string().optional().describe('Bitbucket repository slug'),
       bitbucketId: z.string().optional().describe('Bitbucket integration ID'),
       enableSubmodules: z.boolean().optional().describe('Whether to initialize git submodules'),
       watchPaths: z
@@ -428,6 +463,7 @@ const saveDockerProvider = postTool({
       dockerImage: z.string().min(1).describe('Docker image name (e.g., nginx:latest)'),
       username: z.string().optional().describe('Registry username for private images'),
       password: z.string().optional().describe('Registry password for private images'),
+      registryUrl: z.string().optional().describe('Custom registry URL'),
     })
     .strict(),
   endpoint: '/application.saveDockerProvider',

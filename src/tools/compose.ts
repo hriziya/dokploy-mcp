@@ -11,7 +11,12 @@ const create = postTool({
   schema: z
     .object({
       name: z.string().min(1).describe('The name of the compose service'),
-      projectId: z.string().min(1).describe('The project ID to create the compose service in'),
+      environmentId: z
+        .string()
+        .min(1)
+        .describe(
+          'The environment ID to create the compose service in (get from project.one response)',
+        ),
       description: z.string().nullable().optional().describe('Compose service description'),
       composeType: z
         .enum(['docker-compose', 'stack'])
@@ -51,7 +56,7 @@ const update = postTool({
       env: z.string().nullable().optional().describe('Environment variables'),
       composeFile: z.string().nullable().optional().describe('Docker Compose file content'),
       sourceType: z
-        .enum(['git', 'github', 'raw'])
+        .enum(['git', 'github', 'gitlab', 'bitbucket', 'gitea', 'raw'])
         .optional()
         .describe('Source type for the compose file'),
       composeType: z
@@ -72,7 +77,6 @@ const update = postTool({
       command: z.string().nullable().optional().describe('Custom command override'),
       composePath: z.string().optional().describe('Path to the compose file within the repo'),
       composeStatus: z.string().optional().describe('Compose service status'),
-      projectId: z.string().optional().describe('Project ID'),
     })
     .strict(),
   endpoint: '/compose.update',
@@ -86,6 +90,7 @@ const deleteCompose = postTool({
   schema: z
     .object({
       composeId: z.string().min(1).describe('The unique compose service ID to delete'),
+      deleteVolumes: z.boolean().describe('Whether to delete associated volumes'),
     })
     .strict(),
   endpoint: '/compose.delete',
@@ -100,6 +105,8 @@ const deploy = postTool({
   schema: z
     .object({
       composeId: z.string().min(1).describe('The unique compose service ID to deploy'),
+      title: z.string().optional().describe('Title for the deployment log'),
+      description: z.string().optional().describe('Description for the deployment log'),
     })
     .strict(),
   endpoint: '/compose.deploy',
@@ -113,6 +120,8 @@ const redeploy = postTool({
   schema: z
     .object({
       composeId: z.string().min(1).describe('The unique compose service ID to redeploy'),
+      title: z.string().optional().describe('Title for the deployment log'),
+      description: z.string().optional().describe('Description for the deployment log'),
     })
     .strict(),
   endpoint: '/compose.redeploy',
@@ -193,8 +202,12 @@ const deployTemplate = postTool({
     'Deploy a compose service from a predefined template. Templates provide pre-configured compose stacks for common applications. Requires a project ID and the template ID. Returns the created compose service with deployment status.',
   schema: z
     .object({
-      projectId: z.string().min(1).describe('The project ID to deploy the template in'),
+      environmentId: z
+        .string()
+        .min(1)
+        .describe('The environment ID to deploy the template in (get from project.one response)'),
       id: z.string().min(1).describe('The template ID to deploy'),
+      serverId: z.string().optional().describe('Target server ID for deployment'),
     })
     .strict(),
   endpoint: '/compose.deployTemplate',
